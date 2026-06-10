@@ -907,6 +907,11 @@ async function loadFromSupabase() {
       rateOverride: e.rate_override ?? undefined
     }));
 
+    // Seed entries if the table is empty
+    if (entries.length === 0) {
+      await seedAllEntries();
+    }
+
     // If no employees in Supabase yet, seed from defaults then upload
     if (employees.length === 0) {
       db.employees = getDefaultEmployees();
@@ -2572,7 +2577,7 @@ function downloadCSV(rows, filename) {
 // INIT
 // ==========================================
 
-function seedAllEntries() {
+async function seedAllEntries() {
   // Build a set of existing entry fingerprints so we never double-add
   const existing = new Set(db.entries.map(e => `${e.date}|${e.cleaner}|${e.property}|${e.rate}|${e.notes}`));
 
@@ -3429,12 +3434,16 @@ function seedAllEntries() {
     existing.add(key);
   });
   if (newEntries.length > 0) {
-    // Batch upsert to Supabase
-    sbUpsert('entries', newEntries.map(e => ({
-      id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
-      type: e.type, rate: e.rate, additional_rate: e.additionalRate || 0,
-      notes: e.notes || '', is_manual: false, added_by: null, rate_override: null
-    })));
+    // Batch upsert to Supabase in chunks of 200
+    const chunkSize = 200;
+    for (let i = 0; i < newEntries.length; i += chunkSize) {
+      const chunk = newEntries.slice(i, i + chunkSize);
+      await sbUpsert('entries', chunk.map(e => ({
+        id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
+        type: e.type, rate: e.rate, additional_rate: e.additionalRate || 0,
+        notes: e.notes || '', is_manual: false, added_by: null, rate_override: null
+      })));
+    }
   }
 }
 
