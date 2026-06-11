@@ -911,15 +911,14 @@ async function loadFromSupabase() {
       addedBy: e.added_by || null, rateOverride: e.rate_override ?? undefined
     }));
 
-    // Seed entries if the table is empty
-    if (entries.length === 0) {
-      console.log('🟡 Table empty — starting seed...');
-      setDbStatus('⏳ Seeding data to Supabase — please wait…', 'info');
-      await seedAllEntries();
-      console.log('🟢 Seed complete —', db.entries.length, 'entries');
-      setDbStatus(`✅ ${db.entries.length} entries seeded successfully!`, 'success');
+    // Always run seed — dedup logic inside ensures no duplicates
+    const beforeCount = db.entries.length;
+    setDbStatus('⏳ Checking for missing entries…', 'info');
+    await seedAllEntries();
+    const added = db.entries.length - beforeCount;
+    if (added > 0) {
+      setDbStatus(`✅ ${added} new entries added. Total: ${db.entries.length}`, 'success');
     } else {
-      console.log('🟢 Loaded', entries.length, 'entries from Supabase');
       setDbStatus(`✅ Connected — ${db.entries.length} entries loaded from Supabase.`, 'success');
     }
 
