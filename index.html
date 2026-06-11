@@ -405,6 +405,7 @@
 <div id="page-dashboard" class="page active">
   <div class="section-title">Overview</div>
   <div class="section-sub">Dream Rental Solutions — Invoice & Payroll System</div>
+  <div id="db-status-banner" style="display:none;margin-bottom:16px;padding:12px 16px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;"></div>
   <div class="stats-row" id="dashboard-stats"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
     <div class="card">
@@ -800,12 +801,17 @@ async function sbGet(table, params = '') {
   return r.json();
 }
 async function sbUpsert(table, rows) {
+  const body = Array.isArray(rows) ? rows : [rows];
+  if (body.length === 0) return true;
   const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
     method: 'POST',
-    headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates,return=representation' },
-    body: JSON.stringify(Array.isArray(rows) ? rows : [rows])
+    headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(body)
   });
-  if (!r.ok) console.error('sbUpsert', table, await r.text());
+  if (!r.ok) {
+    const err = await r.text();
+    console.error('sbUpsert error on', table, ':', err);
+  }
   return r.ok;
 }
 async function sbDelete(table, filter) {
@@ -884,35 +890,39 @@ async function sbDeleteBillingRate(property) {
 
 // ---- Load all data from Supabase ----
 async function loadFromSupabase() {
+  console.log('🔵 loadFromSupabase() called');
   showLoadingOverlay(true);
+  setDbStatus('', '');
   try {
-    const [entries, employees, billingRates, billingMiscRows] = await Promise.all([
+    console.log('🔵 Fetching from Supabase...', SB_URL);
+    const [entries, employees, billingRates, billingMiscRows, messages] = await Promise.all([
       sbGet('entries', 'order=date.asc'),
       sbGet('employee_rates', 'order=name.asc'),
       sbGet('billing_rates', 'order=property.asc'),
-      sbGet('billing_misc')
+      sbGet('billing_misc'),
+      sbGet('messages', 'order=id.asc')
     ]);
+    console.log('🟢 Supabase responded — entries:', entries.length, 'employees:', employees.length);
 
     db.entries = entries.map(e => ({
-      id: e.id,
-      date: e.date,
-      cleaner: e.cleaner,
-      property: e.property,
-      type: e.type,
-      rate: e.rate,
-      additionalRate: e.additional_rate || 0,
-      notes: e.notes || '',
-      isManual: e.is_manual || false,
-      addedBy: e.added_by || null,
-      rateOverride: e.rate_override ?? undefined
+      id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
+      type: e.type, rate: e.rate, additionalRate: e.additional_rate || 0,
+      notes: e.notes || '', isManual: e.is_manual || false,
+      addedBy: e.added_by || null, rateOverride: e.rate_override ?? undefined
     }));
 
     // Seed entries if the table is empty
     if (entries.length === 0) {
+      console.log('🟡 Table empty — starting seed...');
+      setDbStatus('⏳ Seeding data to Supabase — please wait…', 'info');
       await seedAllEntries();
+      console.log('🟢 Seed complete —', db.entries.length, 'entries');
+      setDbStatus(`✅ ${db.entries.length} entries seeded successfully!`, 'success');
+    } else {
+      console.log('🟢 Loaded', entries.length, 'entries from Supabase');
+      setDbStatus(`✅ Connected — ${db.entries.length} entries loaded from Supabase.`, 'success');
     }
 
-    // If no employees in Supabase yet, seed from defaults then upload
     if (employees.length === 0) {
       db.employees = getDefaultEmployees();
       await Promise.all(db.employees.map(emp => sbSaveEmployeeRate(emp)));
@@ -920,7 +930,6 @@ async function loadFromSupabase() {
       db.employees = employees.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
     }
 
-    // Same for billing rates
     if (billingRates.length === 0) {
       db.billingRates = getDefaultBillingRates();
       await Promise.all(db.billingRates.map(b => sbSaveBillingRate(b.property, b.rate)));
@@ -928,18 +937,30 @@ async function loadFromSupabase() {
       db.billingRates = billingRates.map(b => ({ property: b.property, rate: b.rate }));
     }
 
-    // Billing misc
     db.billingMisc = {};
     billingMiscRows.forEach(row => { db.billingMisc[row.key] = row.data || []; });
 
-    // Seed entries if empty
-    seedAllEntries();
+    // Load messages permanently from Supabase
+    db.messages = messages;
+    console.log('🟢 Messages loaded:', messages.length);
 
   } catch(e) {
-    console.error('Supabase load failed:', e);
-    showToast('⚠️ Could not connect to database. Working offline.', 'error');
+    console.error('🔴 Supabase load failed:', e);
+    setDbStatus('❌ Could not connect to Supabase: ' + e.message, 'error');
+    showToast('⚠️ Could not connect to database.', 'error');
   }
   showLoadingOverlay(false);
+}
+
+function setDbStatus(msg, type) {
+  const el = document.getElementById('db-status-banner');
+  if (!el) return;
+  if (!msg) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.style.background = type === 'error' ? 'rgba(192,57,43,.15)' : type === 'info' ? 'rgba(144,224,239,.1)' : 'rgba(46,204,113,.1)';
+  el.style.border = `1px solid ${type === 'error' ? '#c0392b' : type === 'info' ? 'var(--accent)' : '#2ecc71'}`;
+  el.style.color = type === 'error' ? '#e74c3c' : type === 'info' ? 'var(--accent)' : '#2ecc71';
+  el.textContent = msg;
 }
 
 function showLoadingOverlay(show) {
@@ -3421,6 +3442,117 @@ async function seedAllEntries() {
     ['2026-05-29','Claudia','-', 43.71, 0, 'supplies', 'misc'],
     ['2026-05-29','Tammy','-', 148.74, 0, '', 'misc'],
     ['2026-05-29','Brechelle','-', 10.39, 0, 'supplies', 'misc'],
+
+    // ══════════════════════════════════════════════════════
+    // JUNE 6–9, 2026 (CSV export)
+    // ══════════════════════════════════════════════════════
+    ['2026-06-06','Claudia','Dream 18th Pilsen', 85, 0, '1b', 'clean'],
+    ['2026-06-06','Cory','Lee Reta', 125, 0, '', 'clean'],
+    ['2026-06-06','Cory','Angela Home', 115, 0, 'w/ Jocy', 'clean'],
+    ['2026-06-06','Iona','Noble George 2', 75, 0, '', 'clean'],
+    ['2026-06-06','Ivanna','Dream Polk 201', 90, 0, '', 'clean'],
+    ['2026-06-06','Ivanna','Dream Polk 203', 90, 0, '', 'clean'],
+    ['2026-06-06','Jocy','Augusta 1E', 20, 0, '', 'inspect'],
+    ['2026-06-06','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-06-06','Jocy','Dream Polk 101', 90, 0, '', 'clean'],
+    ['2026-06-06','Jocy','Dream Winthrop 411', 20, 0, '', 'inspect'],
+    ['2026-06-06','Jocy','Thomas Belle', 20, 0, '', 'inspect'],
+    ['2026-06-06','Katya Abdymazhitova','Dream Winthrop 411', 75, 0, '', 'clean'],
+    ['2026-06-06','Katya Abdymazhitova','Thomas Belle', 80, 0, '', 'clean'],
+    ['2026-06-06','Lexie','Dream Grand 204', 70, 0, '', 'clean'],
+    ['2026-06-06','Sabrina','Augusta 1E', 100, 0, '', 'clean'],
+    ['2026-06-06','Sabrina','Thomas Fry', 60, 0, '2f', 'clean'],
+    ['2026-06-06','Wendy','Dream Houston 2107', 140, 0, '', 'clean'],
+    ['2026-06-07','Antonina Wiszniewski','Dream Bingham', 200, 0, '', 'clean'],
+    ['2026-06-07','Beatriz','Dream Largo', 200, 0, '', 'clean'],
+    ['2026-06-07','Camila','Dwellish Southport', 95, 0, '', 'clean'],
+    ['2026-06-07','Camila','Thomas George', 65, 0, '', 'clean'],
+    ['2026-06-07','Claudia','Dream Beach', 200, 0, '', 'clean'],
+    ['2026-06-07','Claudia','Village Inn', 130, 0, '', 'clean'],
+    ['2026-06-07','Coree','Dream Montana', 300, 0, '', 'clean'],
+    ['2026-06-07','Cory','Dream Nevele 508', 106, 0, '', 'clean'],
+    ['2026-06-07','Cory','Dwellish Wilton', 130, 0, '', 'clean'],
+    ['2026-06-07','Ivanna','Dream Polk 204', 90, 0, '', 'clean'],
+    ['2026-06-07','Ivanna','Dream Washington House', 200, 0, '', 'clean'],
+    ['2026-06-07','Jocy','Augusta 1W', 20, 0, '', 'inspect'],
+    ['2026-06-07','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-06-07','Jocy','Dream Claremont 2', 20, 0, '', 'inspect'],
+    ['2026-06-07','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-06-07','Jocy','Dream Straits 1309', 120, 0, '', 'clean'],
+    ['2026-06-07','Jocy','Dream Straits 1509', 120, 0, '', 'clean'],
+    ['2026-06-07','Jocy','Dream Winthrop 412', 20, 0, '', 'inspect'],
+    ['2026-06-07','Jocy','Dwellish Southport', 25, 0, '', 'inspect'],
+    ['2026-06-07','Jocy','Thomas George', 20, 0, '', 'inspect'],
+    ['2026-06-07','Katya Abdymazhitova','Dream Winthrop 412', 75, 0, '', 'clean'],
+    ['2026-06-07','Lexie','Dream Claremont 1', 85, 0, '', 'clean'],
+    ['2026-06-07','Lexie','Dream Claremont 2', 85, 0, '', 'clean'],
+    ['2026-06-07','Mustafa','Dream Buffalo', 150, 0, '', 'clean'],
+    ['2026-06-07','Natallia','Dream Bell', 240, -10, '', 'clean'],
+    ['2026-06-07','Natallia','Dream Washington Apt 2', 120, -10, '', 'clean'],
+    ['2026-06-07','Natallia','Dream Washington Apt 3', 120, -10, '', 'clean'],
+    ['2026-06-07','Sabrina','Augusta 1W', 100, 0, '', 'clean'],
+    ['2026-06-07','Sabrina','Dream Grand 403', 70, 0, '', 'clean'],
+    ['2026-06-07','Tammy','Dream Nekoosa', 300, 0, '', 'clean'],
+    ['2026-06-07','Wendy','Dream Houston 2103', 140, 0, '', 'clean'],
+    ['2026-06-08','Brechelle','Dream Spearfish', 265, 0, '', 'clean'],
+    ['2026-06-08','Camila','Angela Home', 115, 0, '', 'clean'],
+    ['2026-06-08','Claudia','Dream 17th Pilsen', 110, 0, '', 'clean'],
+    ['2026-06-08','Claudia','Dream 18th Pilsen', 85, 0, '1a', 'clean'],
+    ['2026-06-08','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-06-08','Claudia','Dream Willard', 120, 0, '', 'clean'],
+    ['2026-06-08','Claudia','Dwellish Ohio', 140, 0, '', 'clean'],
+    ['2026-06-08','Claudia','Dwellish Warner', 95, 0, '', 'clean'],
+    ['2026-06-08','Cory','Dream Magnolia', 150, 0, '', 'clean'],
+    ['2026-06-08','Cory','Dream Throop', 270, 0, '', 'clean'],
+    ['2026-06-08','Cory','Thomas Andersonville', 224, 0, '', 'clean'],
+    ['2026-06-08','Iona','Noble George 2', 75, 0, '', 'clean'],
+    ['2026-06-08','Iona','Noble George 3', 65, 0, '', 'clean'],
+    ['2026-06-08','Ivanna','Dream Polk 205', 90, 0, 'month long', 'clean'],
+    ['2026-06-08','Ivanna','Dream Paulina', 70, 0, '', 'clean'],
+    ['2026-06-08','Jocy','Angela Home', 15, 0, '', 'inspect'],
+    ['2026-06-08','Jocy','Dream Michigan', 20, 0, '', 'inspect'],
+    ['2026-06-08','Jocy','Dream Winthrop 312', 20, 0, '', 'inspect'],
+    ['2026-06-08','Jocy','Dream Winthrop 506', 20, 0, '', 'inspect'],
+    ['2026-06-08','Jocy','Dwellish Drexel', 30, 0, '', 'inspect'],
+    ['2026-06-08','Jocy','Jorge Old Chicago', 20, 0, '', 'inspect'],
+    ['2026-06-08','Jorge Gallardo','Jorge Old Chicago', 90, 0, '', 'clean'],
+    ['2026-06-08','Katya Abdymazhitova','Dream Winthrop 312', 75, 0, '', 'clean'],
+    ['2026-06-08','Katya Abdymazhitova','Dream Winthrop 506', 75, 0, '', 'clean'],
+    ['2026-06-08','Lexie','2018 21st Jack', 100, 0, '', 'clean'],
+    ['2026-06-08','Lexie','Dwellish Drexel', 130, 0, '', 'clean'],
+    ['2026-06-08','Natallia','Dream Fairfield', 240, -10, '', 'clean'],
+    ['2026-06-08','Natallia','Dream Washington Apt 4', 120, -10, '', 'clean'],
+    ['2026-06-08','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-06-08','Sabrina','Dream Michigan', 100, 0, '', 'clean'],
+    ['2026-06-08','Sabrina','Dream Polk 102', 80, 0, '', 'clean'],
+    ['2026-06-08','Wendy','Dream Houston 2105', 140, 0, '', 'clean'],
+    ['2026-06-08','Wendy','Dream Houston 2107', 140, 0, '', 'clean'],
+    ['2026-06-08','Wendy','Dream Houston 2109', 140, 0, '', 'clean'],
+    ['2026-06-09','Anna Maciata','Dream Polk 204', 90, 0, '', 'clean'],
+    ['2026-06-09','Antonina Wiszniewski','Dream Bingham', 200, 0, '', 'clean'],
+    ['2026-06-09','Beatriz','Tarpon Springs', 0, 0, '', 'clean'],
+    ['2026-06-09','Camila','Dwellish Southport', 95, 0, '', 'clean'],
+    ['2026-06-09','Camila','Thomas Forest Park', 90, 0, '', 'clean'],
+    ['2026-06-09','Claudia','Village Inn', 130, 0, '', 'clean'],
+    ['2026-06-09','Cory','Dream Nevele 508', 106, 0, '', 'clean'],
+    ['2026-06-09','Cory','Dwellish Wilton', 130, 0, '', 'clean'],
+    ['2026-06-09','Cory','Lee Reta', 125, 0, '', 'clean'],
+    ['2026-06-09','Ivanna','Dream Polk 203', 90, 0, '', 'clean'],
+    ['2026-06-09','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-06-09','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-06-09','Jocy','Dream Straits 1409', 120, 0, '', 'clean'],
+    ['2026-06-09','Jocy','Dream Straits 1509', 120, 0, '', 'clean'],
+    ['2026-06-09','Jocy','Dream Winthrop 311', 20, 0, '', 'inspect'],
+    ['2026-06-09','Jocy','Dream Winthrop 507', 20, 0, '', 'inspect'],
+    ['2026-06-09','Jocy','Dwellish Southport', 25, 0, '', 'inspect'],
+    ['2026-06-09','Jocy','Thomas Belle', 20, 0, '', 'inspect'],
+    ['2026-06-09','Jocy','Thomas Forest Park', 10, 0, '', 'inspect'],
+    ['2026-06-09','Katya Abdymazhitova','Dream Winthrop 311', 75, 0, '', 'clean'],
+    ['2026-06-09','Katya Abdymazhitova','Dream Winthrop 507', 75, 0, '', 'clean'],
+    ['2026-06-09','Katya Abdymazhitova','Thomas Belle', 80, 0, '', 'clean'],
+    ['2026-06-09','Lexie','Dream Grand 204', 70, 0, '', 'clean'],
+    ['2026-06-09','Natallia','Dream Bell', 240, -10, '', 'clean'],
+    ['2026-06-09','Sabrina','Dream Claremont 1', 85, 0, '', 'clean'],
   ];
 
   let idCounter = Date.now();
@@ -3635,12 +3767,13 @@ async function sendMessage() {
   if (!text) return;
   input.value = '';
   const msg = { id: Date.now(), sender: currentUser, text, ts: new Date().toISOString() };
-  // Optimistic update
+  // Optimistic update — show immediately
   db.messages = [...loadMessages(), msg];
   renderChat();
   markChatSeen();
-  // Save to Supabase
-  await sbInsert('messages', msg);
+  // Persist to Supabase permanently
+  const ok = await sbInsert('messages', msg);
+  if (!ok) showToast('⚠️ Message may not have saved. Check connection.', 'error');
 }
 
 function fmtChatTime(iso) {
