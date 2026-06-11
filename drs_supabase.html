@@ -1,0 +1,3742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dream Rental Solutions — Invoice & Payroll System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060d14;
+    --surface: #0b1520;
+    --surface2: #0f1e2d;
+    --border: #152840;
+    --accent: #90E0EF;
+    --accent2: #48b8d0;
+    --danger: #e07070;
+    --text: #d8f0f7;
+    --text-muted: #5a8fa8;
+    --text-dim: #234560;
+    --green: #5bc898;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .logo span { color: var(--text-muted); font-size: 13px; font-family: 'DM Sans', sans-serif; margin-left: 10px; }
+  /* NAV */
+  .nav {
+    display: flex;
+    gap: 4px;
+  }
+  .nav-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--accent); color: #0f0f0f; }
+  .nav-btn { position: relative; }
+  .chat-badge { position: absolute; top: 4px; right: 4px; background: #e74c3c; color: #fff; font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; line-height: 1; pointer-events: none; }
+  /* LAYOUT */
+  .page { display: none; padding: 32px; max-width: 1400px; margin: 0 auto; }
+  .page.active { display: block; }
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-title .icon { font-size: 18px; }
+  /* FORM ELEMENTS */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+  .rate-display {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    color: var(--green);
+    font-weight: 500;
+  }
+  /* BUTTONS */
+  .btn {
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 11px 24px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-green { background: var(--green); color: #0f0f0f; }
+  .btn-sm { padding: 6px 14px; font-size: 11px; }
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 14px; color: var(--text); vertical-align: middle; }
+  tbody td.mono { font-family: 'DM Mono', monospace; }
+  tbody td.green { color: var(--green); font-family: 'DM Mono', monospace; }
+  tbody td.muted { color: var(--text-muted); }
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge-clean { background: rgba(106,191,128,0.15); color: var(--green); }
+  .badge-inspect { background: rgba(127,181,160,0.15); color: var(--accent2); }
+  .badge-misc { background: rgba(136,136,136,0.15); color: var(--text-muted); }
+  /* STAT CARDS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--accent); }
+  .stat-sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  /* GRID LAYOUTS */
+  .two-col { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+  /* ALERT */
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alert-success { background: rgba(106,191,128,0.12); border: 1px solid rgba(106,191,128,0.3); color: var(--green); }
+  .alert-error { background: rgba(224,112,112,0.12); border: 1px solid rgba(224,112,112,0.3); color: var(--danger); }
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .section-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+  /* TOTALS ROW */
+  .totals-row td { font-weight: 700; background: rgba(200,169,110,0.08); color: var(--accent) !important; border-top: 2px solid var(--accent); }
+  /* FILTER ROW */
+  .filter-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .filter-row .form-group { min-width: 160px; }
+  /* TAB SUB */
+  .sub-tabs { display: flex; gap: 4px; margin-bottom: 24px; flex-wrap: wrap; }
+  .sub-tab {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sub-tab.active, .sub-tab:hover { background: var(--accent); color: #0f0f0f; border-color: var(--accent); }
+  /* DB EDITOR */
+  .db-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .db-row input { flex: 1; }
+  .db-row .btn-sm { flex-shrink: 0; }
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 60px; color: var(--text-dim); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  /* INVOICE PREVIEW */
+  .invoice-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 700px;
+  }
+  .invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .invoice-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--accent); }
+  .invoice-meta { text-align: right; color: var(--text-muted); font-size: 13px; }
+  .invoice-meta strong { color: var(--text); display: block; }
+  @media print {
+    .header, .nav, .no-print { display: none !important; }
+    body { background: white; color: black; }
+    .invoice-box { border: none; padding: 0; max-width: 100%; }
+    .invoice-title { color: #333; }
+    input[type="number"].payroll-inline-input, textarea.payroll-notes-input { border: none !important; background: transparent !important; color: #000 !important; width: auto !important; }
+  }
+
+  /* LOGIN */
+  #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  #app-shell { display: none; }
+  .login-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 48px 40px; width: 400px; text-align: center; }
+  .login-logo { font-family: 'DM Serif Display', serif; font-size: 30px; color: var(--accent); margin-bottom: 6px; }
+  .login-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 36px; }
+  .login-error { color: var(--danger); font-size: 13px; margin-bottom: 14px; min-height: 20px; }
+  .login-box .form-group { text-align: left; margin-bottom: 18px; }
+  /* READONLY BANNER */
+  .readonly-banner { background: rgba(200,169,110,0.07); border: 1px solid rgba(200,169,110,0.25); border-radius: var(--radius); padding: 10px 16px; font-size: 12px; color: var(--accent); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  /* USER PILL */
+  .user-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 12px; color: var(--text-muted); }
+  .user-pill strong { color: var(--accent); }
+  .btn-logout { background: none; border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; padding: 5px 14px; border-radius: var(--radius); cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+  /* PAYROLL INLINE EDIT */
+  input.payroll-inline-input { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 5px 8px; width: 90px; }
+  input.payroll-inline-input:focus { border-color: var(--accent); outline: none; }
+  input.payroll-inline-input.overridden { border-color: var(--accent); background: rgba(200,169,110,0.08); }
+  textarea.payroll-notes-input { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 8px; width: 150px; height: 34px; resize: none; }
+  textarea.payroll-notes-input:focus { border-color: var(--accent); outline: none; }
+  .override-hint { font-size: 10px; color: var(--accent); display: block; margin-top: 3px; }
+  /* BILLING MISC */
+  .billing-group-wrap { display: grid; grid-template-columns: 1fr 360px; gap: 16px; margin-bottom: 20px; align-items: start; }
+  .billing-misc-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .billing-misc-title { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .misc-row { display: grid; grid-template-columns: 108px 1fr 80px 32px; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .misc-row input { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 8px; outline: none; width: 100%; }
+  .misc-row input:focus { border-color: var(--accent); }
+  .misc-subtotal { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; }
+  .misc-subtotal span { color: var(--text-muted); }
+  .misc-subtotal strong { color: var(--green); font-family: 'DM Mono', monospace; }
+  .billing-combined-total { background: rgba(144,224,239,0.06); border: 1px solid rgba(144,224,239,0.2); border-radius: 8px; padding: 8px 14px; margin-top: 10px; display: flex; justify-content: space-between; font-size: 12px; }
+  .billing-combined-total span { color: var(--text-muted); }
+  .billing-combined-total strong { color: var(--accent); font-family: 'DM Mono', monospace; font-size: 14px; }
+  .btn-add-row {
+    background: none;
+    border: 1px dashed var(--accent);
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .btn-add-row:hover { background: rgba(144,224,239,0.08); }
+  tr.manual-row td { background: rgba(144,224,239,0.04); }
+  tr.manual-row td:first-child { color: var(--text-muted); font-size: 12px; }
+
+  /* ── Searchable dropdown ── */
+  .sd-wrap { position: relative; display: inline-block; width: 100%; }
+  .sd-input { width: 100%; box-sizing: border-box; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 9px 32px 9px 12px; outline: none; cursor: pointer; }
+  .sd-input:focus { border-color: var(--accent); }
+  .sd-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted); font-size: 11px; }
+  .sd-list { position: absolute; z-index: 9999; top: calc(100% + 2px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; max-height: 220px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,.4); display: none; }
+  .sd-list.open { display: block; }
+  .sd-item { padding: 9px 14px; cursor: pointer; font-size: 13px; color: var(--text); }
+  .sd-item:hover, .sd-item.active { background: rgba(144,224,239,.12); color: var(--accent); }
+  .sd-item.placeholder { color: var(--text-muted); font-style: italic; }
+  .sd-empty { padding: 10px 14px; color: var(--text-muted); font-size: 13px; font-style: italic; }
+  /* Hide number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+  /* ── Chat ── */
+  .chat-bubble { max-width: 72%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; word-break: break-word; }
+  .chat-bubble.me { background: var(--accent); color: #0a1520; border-bottom-right-radius: 4px; align-self: flex-end; }
+  .chat-bubble.them { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; align-self: flex-start; }
+  .chat-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .chat-meta.me { text-align: right; align-self: flex-end; }
+  .chat-meta.them { text-align: left; align-self: flex-start; }
+  .chat-group { display: flex; flex-direction: column; gap: 3px; }
+  .chat-group.me { align-items: flex-end; }
+  .chat-group.them { align-items: flex-start; }
+  .chat-sender { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 0 4px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Dream Rental Solutions</div>
+    <div class="login-sub">Invoice & Payroll System</div>
+    <div class="login-error" id="login-error"></div>
+    <div class="form-group">
+      <label>Select User</label>
+      <select id="login-user" onchange="document.getElementById('login-pass').value=''">
+        <option value="">— Select your name —</option>
+        <option value="Greg">Greg</option>
+        <option value="Jeinna">Jeinna</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn" style="width:100%;margin-top:8px;" onclick="doLogin()">Sign In →</button>
+  </div>
+</div>
+
+<!-- APP SHELL (hidden until login) -->
+<div id="app-shell">
+
+<header class="header">
+  <div class="logo">Dream Rental Solutions <span>Invoice & Payroll System</span></div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <nav class="nav" id="main-nav">
+      <!-- Built dynamically by buildNav() after login -->
+    </nav>
+    <div class="user-pill" id="user-pill" style="display:none;">Signed in as <strong id="user-display"></strong></div>
+    <button class="btn-logout" id="logout-btn" style="display:none;" onclick="doLogout()">Sign Out</button>
+  </div>
+</header>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="section-title">Overview</div>
+  <div class="section-sub">Dream Rental Solutions — Invoice & Payroll System</div>
+  <div id="db-status-banner" style="display:none;margin-bottom:16px;padding:12px 16px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;"></div>
+  <div class="stats-row" id="dashboard-stats"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> Recent Entries</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Cleaner</th><th>Property</th><th>Type</th><th>Amount</th></tr></thead>
+          <tbody id="recent-entries"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">👥</span> Top Earners (This Period)</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cleaner</th><th>Jobs</th><th>Earnings</th></tr></thead>
+          <tbody id="top-earners"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOG WORK FORM -->
+<div id="page-form" class="page">
+  <div class="section-title">Log Work Entry</div>
+  <div class="section-sub">Record a cleaning or inspection. Rate auto-fills from the database.</div>
+  <div id="form-alert"></div>
+  <div style="max-width:680px;">
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="entry-date">
+        </div>
+        <div class="form-group">
+          <label>Cleaner Name</label>
+          <select id="entry-cleaner" onchange="onCleanerChange()">
+            <option value="">— Select Cleaner —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Property</label>
+          <select id="entry-property" onchange="onPropertyChange()">
+            <option value="">— Select Property —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Work Type</label>
+          <select id="entry-type" onchange="onTypeChange()">
+            <option value="clean">Cleaning</option>
+            <option value="inspect">Inspection</option>
+            <option value="misc">Misc / Bonus / Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Rate (Auto-filled)</label>
+          <div class="rate-display" id="rate-display">$0.00</div>
+        </div>
+        <div class="form-group">
+          <label>Additional Rate (Optional)</label>
+          <input type="number" id="rate-override" placeholder="Adds on top of the base rate" step="0.01">
+        </div>
+        <div class="form-group full">
+          <label>Notes (Optional)</label>
+          <input type="text" id="entry-notes" placeholder="Any additional notes...">
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:24px;">
+        <button class="btn btn-green" onclick="submitEntry()">✓ Submit Entry</button>
+        <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SORTED SUMMARY -->
+<div id="page-summary" class="page">
+  <div class="section-title">Sorted Summary</div>
+  <div class="section-sub">All submitted payroll records. Filter by date range or cleaner.</div>
+  <div class="filter-row">
+    <div class="form-group"><label>From Date</label><input type="date" id="summary-from"></div>
+    <div class="form-group"><label>To Date</label><input type="date" id="summary-to"></div>
+    <div class="form-group"><label>Cleaner</label>
+      <select id="summary-cleaner"><option value="">All Cleaners</option></select>
+    </div>
+    <div class="form-group"><label>Property</label>
+      <input type="text" id="summary-property" placeholder="Filter property...">
+    </div>
+    <button class="btn" onclick="renderSummary()" style="margin-bottom:0">Filter</button>
+    <button class="btn btn-secondary" onclick="clearSummaryFilters()" style="margin-bottom:0">Clear</button>
+    <button class="btn btn-green" onclick="exportSummaryCSV()" style="margin-bottom:0;margin-left:auto;">⬇ Export CSV</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Cleaner</th><th>Property</th><th>Type</th><th>Rate</th><th>Additional Rate</th><th>Notes</th><th class="no-print" id="summary-action-col">⚙</th></tr></thead>
+        <tbody id="summary-body"></tbody>
+        <tfoot><tr class="totals-row" id="summary-totals"></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE PAYROLL REPORT -->
+<div id="page-payroll" class="page">
+  <div class="section-title">Employee Payroll Report</div>
+  <div class="section-sub">Select a cleaner and date range to generate their payroll.</div>
+  <div class="filter-row">
+    <div class="form-group"><label>Cleaner</label>
+      <select id="payroll-cleaner" onchange="renderPayroll()"><option value="">— Select Cleaner —</option></select>
+    </div>
+    <div class="form-group"><label>From</label><input type="date" id="payroll-from" onchange="renderPayroll()"></div>
+    <div class="form-group"><label>To</label><input type="date" id="payroll-to" onchange="renderPayroll()"></div>
+    <button class="btn btn-green" onclick="printPayroll()" style="margin-bottom:0;margin-left:auto;">🖨 Print / PDF</button>
+    <button class="btn btn-secondary" onclick="exportPayrollCSV()" style="margin-bottom:0;">⬇ Export CSV</button>
+  </div>
+  <div style="display:flex;gap:20px;align-items:flex-start;">
+    <div style="flex:1;min-width:0;" id="payroll-report"></div>
+    <div id="payroll-staff-panel" class="no-print" style="width:360px;flex-shrink:0;"></div>
+  </div>
+</div>
+
+<!-- BILLING -->
+<div id="page-billing" class="page">
+  <div class="section-title">Billing System</div>
+  <div class="section-sub">Generate invoices grouped by property brand. Rates pulled from the billing database.</div>
+  <div class="filter-row">
+    <div class="form-group"><label>From Date</label><input type="date" id="billing-from"></div>
+    <div class="form-group"><label>To Date</label><input type="date" id="billing-to"></div>
+    <div class="form-group"><label>Property Group</label>
+      <select id="billing-group">
+        <option value="">All Groups</option>
+        <option value="Dream">Dream</option>
+        <option value="Thomas">Thomas</option>
+        <option value="Dwellish">Dwellish</option>
+        <option value="Lotus">Lotus</option>
+        <option value="Kinga">Kinga</option>
+        <option value="Marco">Marco</option>
+        <option value="Village Inn">Village Inn</option>
+        <option value="Ethos">Ethos</option>
+        <option value="Angela">Angela</option>
+        <option value="Daniel">Daniel</option>
+      </select>
+    </div>
+    <button class="btn" onclick="renderBilling()">Generate Billing</button>
+    <button class="btn btn-green" onclick="exportBillingCSV()" style="margin-bottom:0;margin-left:auto;">⬇ Export CSV</button>
+  </div>
+  <div id="billing-report"></div>
+</div>
+
+<!-- DATABASE EDITOR -->
+<div id="page-database" class="page">
+  <div class="section-title">Database</div>
+  <div class="section-sub">Edit employee rates, billing rates, and manage all master data.</div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="showDbTab('db-employees')">Employee Rates</button>
+    <button class="sub-tab" onclick="showDbTab('db-billing')">Billing Rates</button>
+    <button class="sub-tab" onclick="showDbTab('db-new-entry')">Add New Employee/Property</button>
+  </div>
+  <div id="db-employees" class="db-panel">
+    <div class="filter-row">
+      <div class="form-group"><label>Filter by Employee</label>
+        <select id="db-emp-filter" onchange="renderDbEmployees()"><option value="">All Employees</option></select>
+      </div>
+      <div class="form-group"><label>Search Property</label>
+        <input type="text" id="db-prop-filter" placeholder="Type property name..." oninput="renderDbEmployees()">
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Employee</th><th>Property</th><th>Clean Rate</th><th>Inspect Rate</th><th>Actions</th></tr></thead>
+          <tbody id="db-emp-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div id="db-billing" class="db-panel" style="display:none;">
+    <div class="filter-row">
+      <div class="form-group"><label>Search Property</label>
+        <input type="text" id="db-billing-filter" placeholder="Type property name..." oninput="renderDbBilling()">
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Property</th><th>Group</th><th>Billing Rate</th><th>Actions</th></tr></thead>
+          <tbody id="db-billing-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div id="db-new-entry" class="db-panel" style="display:none;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;">
+      <div class="card">
+        <div class="card-title">Add Employee Rate</div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Employee Name</label>
+          <select id="new-emp-name"><option value="">— Select Cleaner —</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Property</label><input type="text" id="new-emp-prop" placeholder="Property name"></div>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="form-group"><label>Clean Rate ($)</label><input type="number" id="new-emp-clean" step="0.01" placeholder="0.00"></div>
+          <div class="form-group"><label>Inspect Rate ($)</label><input type="number" id="new-emp-inspect" step="0.01" placeholder="0.00"></div>
+        </div>
+        <button class="btn" onclick="addEmployeeRate()">Add Rate</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Add New Employee</div>
+        <div class="form-group" style="margin-bottom:12px;"><label>New Employee Name</label><input type="text" id="new-emp-fullname" placeholder="Full name"></div>
+        <button class="btn" onclick="addNewEmployee()">Add Employee</button>
+        <div style="height:32px;"></div>
+        <div class="card-title" style="margin-top:4px;">Add Billing Property</div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Property Name</label><input type="text" id="new-billing-prop" placeholder="Property name"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Billing Rate ($)</label><input type="number" id="new-billing-rate" step="0.01" placeholder="0.00"></div>
+        <button class="btn" onclick="addBillingProperty()">Add Property</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGES -->
+<div id="page-messages" class="page">
+  <div class="section-title">💬 Messages</div>
+  <div class="section-sub">Private messages between Greg and Jeinna.</div>
+  <div id="chat-wrap" style="display:flex;flex-direction:column;height:calc(100vh - 220px);min-height:400px;max-width:720px;">
+    <div id="chat-messages" style="flex:1;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px 12px 0 0;padding:20px;display:flex;flex-direction:column;gap:12px;"></div>
+    <div style="display:flex;gap:8px;background:var(--surface2);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:12px;">
+      <textarea id="chat-input" placeholder="Type a message…" rows="2"
+        style="flex:1;resize:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;outline:none;line-height:1.4;"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+      <button class="btn" onclick="sendMessage()" style="align-self:flex-end;padding:10px 20px;">Send</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-shell -->
+
+<script>
+// ==========================================
+// AUTH & SESSION
+// ==========================================
+const USERS = {
+  'Greg':   { password: '!Dream678',    role: 'limited' },
+  'Jeinna': { password: '$Jeinna1802$', role: 'admin'   }
+};
+
+const SESSION_KEY = 'drs_session';
+const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour ms
+let inactivityTimer = null;
+let currentUser = null;
+let currentRole = null;
+
+function isAdmin() { return currentRole === 'admin'; }
+function canEdit(tab) {
+  if (isAdmin()) return true;
+  return ['dashboard','form','payroll'].includes(tab);
+}
+
+// ── Session helpers ──
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    user: currentUser, role: currentRole, lastActive: Date.now()
+  }));
+}
+function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY + '_persist');
+}
+function loadSession() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (Date.now() - s.lastActive > INACTIVITY_LIMIT) { clearSession(); return null; }
+    return s;
+  } catch(e) { return null; }
+}
+
+// ── Activity tracking ──
+function touchSession() {
+  if (!currentUser) return;
+  saveSession();
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => doLogout(true), INACTIVITY_LIMIT);
+}
+function startActivityTracking() {
+  ['click','keydown','mousemove','scroll','touchstart'].forEach(evt =>
+    document.addEventListener(evt, touchSession, { passive: true })
+  );
+  inactivityTimer = setTimeout(() => doLogout(true), INACTIVITY_LIMIT);
+}
+function stopActivityTracking() {
+  ['click','keydown','mousemove','scroll','touchstart'].forEach(evt =>
+    document.removeEventListener(evt, touchSession)
+  );
+  clearTimeout(inactivityTimer);
+}
+
+// ── Login / Logout ──
+function activateApp(user, role) {
+  currentUser = user;
+  currentRole = role;
+  saveSession();
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'block';
+  document.getElementById('user-display').textContent = currentUser;
+  document.getElementById('user-pill').style.display = '';
+  document.getElementById('logout-btn').style.display = '';
+  buildNav();
+  showPage('dashboard');
+  startActivityTracking();
+  // Background poll to keep badge updated on any page
+  setInterval(updateChatBadge, 3000);
+  // Load all data from Supabase
+  loadFromSupabase().then(() => {
+    renderDashboard();
+    startChatPolling();
+    applySearchableDropdowns();
+  });
+}
+
+function doLogin() {
+  const user = document.getElementById('login-user').value;
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if (!user) { errEl.textContent = 'Please select your name.'; return; }
+  if (!USERS[user] || pass !== USERS[user].password) {
+    errEl.textContent = 'Incorrect password. Please try again.';
+    document.getElementById('login-pass').value = '';
+    return;
+  }
+  activateApp(user, USERS[user].role);
+}
+
+function doLogout(timedOut = false) {
+  currentUser = null; currentRole = null;
+  clearSession();
+  stopActivityTracking();
+  stopChatPolling();
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('user-pill').style.display = 'none';
+  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').textContent = timedOut
+    ? 'You were signed out after 1 hour of inactivity.' : '';
+  document.getElementById('login-pass').addEventListener('keydown', function handler(e) {
+    if (e.key === 'Enter') { doLogin(); this.removeEventListener('keydown', handler); }
+  });
+}
+
+function buildNav() {
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'form',      label: 'Log Work' },
+    { id: 'summary',   label: 'Summary' },
+    { id: 'payroll',   label: 'Payroll' },
+    { id: 'billing',   label: 'Billing' },
+    { id: 'database',  label: 'Database' },
+    { id: 'messages',  label: '💬' },
+  ];
+  document.getElementById('main-nav').innerHTML = tabs.map(t =>
+    `<button class="nav-btn" id="navbtn-${t.id}" onclick="showPage('${t.id}')">${t.label}</button>`
+  ).join('');
+  setTimeout(updateChatBadge, 0);
+}
+
+function showReadonlyBanner(pageId) {
+  const bannerId = 'readonly-banner-' + pageId;
+  const existing = document.getElementById(bannerId);
+  if (existing) existing.remove();
+  if (!canEdit(pageId)) {
+    // no banner shown — restricted access is silent
+  }
+}
+
+// ==========================================
+// DATA STORE
+// ==========================================
+// ==========================================
+// SUPABASE CONFIG
+// ==========================================
+const SB_URL  = 'https://iqbwnoxqcajolupagdjd.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxYndub3hxY2Fqb2x1cGFnZGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTYxMTgsImV4cCI6MjA5NjY3MjExOH0.kY_vrQgBHljn7Gou6XxHj0AR2uMurk_WkBcqWjE_xtA';
+const SB_HDR  = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+async function sbGet(table, params = '') {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}&limit=10000`, { headers: SB_HDR });
+  if (!r.ok) { console.error('sbGet', table, await r.text()); return []; }
+  return r.json();
+}
+async function sbUpsert(table, rows) {
+  const body = Array.isArray(rows) ? rows : [rows];
+  if (body.length === 0) return true;
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const err = await r.text();
+    console.error('sbUpsert error on', table, ':', err);
+  }
+  return r.ok;
+}
+async function sbDelete(table, filter) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${filter}`, { method: 'DELETE', headers: SB_HDR });
+  if (!r.ok) console.error('sbDelete', table, await r.text());
+}
+async function sbInsert(table, row) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: SB_HDR,
+    body: JSON.stringify(row)
+  });
+  if (!r.ok) console.error('sbInsert', table, await r.text());
+  return r.ok;
+}
+
+// ==========================================
+// IN-MEMORY DB (cache — loaded from Supabase on start)
+// ==========================================
+const STORAGE_KEY = 'drs_payroll_v10'; // kept for session only (not data)
+
+let db = {
+  entries: [],
+  employees: [],
+  billingRates: [],
+  billingMisc: {},
+  messages: []
+};
+
+// saveData is now a no-op for the in-memory object — 
+// each write goes directly to Supabase via specific functions
+function saveData(d) { /* data saved per-operation to Supabase */ }
+
+function loadData() {
+  return db; // always return in-memory cache
+}
+
+// ---- Entry writes ----
+async function sbSaveEntry(entry) {
+  await sbUpsert('entries', {
+    id: entry.id,
+    date: entry.date,
+    cleaner: entry.cleaner,
+    property: entry.property,
+    type: entry.type,
+    rate: entry.rate,
+    additional_rate: entry.additionalRate || 0,
+    notes: entry.notes || '',
+    is_manual: !!entry.isManual,
+    added_by: entry.addedBy || null,
+    rate_override: entry.rateOverride ?? null
+  });
+}
+async function sbDeleteEntry(id) { await sbDelete('entries', `id=eq.${id}`); }
+
+// ---- Billing misc writes ----
+async function sbSaveBillingMisc(key, rows) {
+  await sbUpsert('billing_misc', { key, data: rows });
+}
+
+// ---- Employee rate writes ----
+async function sbSaveEmployeeRate(emp) {
+  await sbUpsert('employee_rates', { name: emp.name, property: emp.property, clean: emp.clean, inspect: emp.inspect });
+}
+async function sbDeleteEmployeeRate(name, property) {
+  await sbDelete('employee_rates', `name=eq.${encodeURIComponent(name)}&property=eq.${encodeURIComponent(property)}`);
+}
+
+// ---- Billing rate writes ----
+async function sbSaveBillingRate(prop, rate) {
+  await sbUpsert('billing_rates', { property: prop, rate });
+}
+async function sbDeleteBillingRate(property) {
+  await sbDelete('billing_rates', `property=eq.${encodeURIComponent(property)}`);
+}
+
+// ---- Load all data from Supabase ----
+async function loadFromSupabase() {
+  console.log('🔵 loadFromSupabase() called');
+  showLoadingOverlay(true);
+  setDbStatus('', '');
+  try {
+    console.log('🔵 Fetching from Supabase...', SB_URL);
+    const [entries, employees, billingRates, billingMiscRows] = await Promise.all([
+      sbGet('entries', 'order=date.asc'),
+      sbGet('employee_rates', 'order=name.asc'),
+      sbGet('billing_rates', 'order=property.asc'),
+      sbGet('billing_misc')
+    ]);
+    console.log('🟢 Supabase responded — entries:', entries.length, 'employees:', employees.length);
+
+    db.entries = entries.map(e => ({
+      id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
+      type: e.type, rate: e.rate, additionalRate: e.additional_rate || 0,
+      notes: e.notes || '', isManual: e.is_manual || false,
+      addedBy: e.added_by || null, rateOverride: e.rate_override ?? undefined
+    }));
+
+    // Seed entries if the table is empty
+    if (entries.length === 0) {
+      console.log('🟡 Table empty — starting seed...');
+      setDbStatus('⏳ Seeding data to Supabase — please wait…', 'info');
+      await seedAllEntries();
+      console.log('🟢 Seed complete —', db.entries.length, 'entries');
+      setDbStatus(`✅ ${db.entries.length} entries seeded successfully!`, 'success');
+    } else {
+      console.log('🟢 Loaded', entries.length, 'entries from Supabase');
+      setDbStatus(`✅ Connected — ${db.entries.length} entries loaded from Supabase.`, 'success');
+    }
+
+    if (employees.length === 0) {
+      db.employees = getDefaultEmployees();
+      await Promise.all(db.employees.map(emp => sbSaveEmployeeRate(emp)));
+    } else {
+      db.employees = employees.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
+    }
+
+    if (billingRates.length === 0) {
+      db.billingRates = getDefaultBillingRates();
+      await Promise.all(db.billingRates.map(b => sbSaveBillingRate(b.property, b.rate)));
+    } else {
+      db.billingRates = billingRates.map(b => ({ property: b.property, rate: b.rate }));
+    }
+
+    db.billingMisc = {};
+    billingMiscRows.forEach(row => { db.billingMisc[row.key] = row.data || []; });
+
+  } catch(e) {
+    console.error('🔴 Supabase load failed:', e);
+    setDbStatus('❌ Could not connect to Supabase: ' + e.message, 'error');
+    showToast('⚠️ Could not connect to database.', 'error');
+  }
+  showLoadingOverlay(false);
+}
+
+function setDbStatus(msg, type) {
+  const el = document.getElementById('db-status-banner');
+  if (!el) return;
+  if (!msg) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.style.background = type === 'error' ? 'rgba(192,57,43,.15)' : type === 'info' ? 'rgba(144,224,239,.1)' : 'rgba(46,204,113,.1)';
+  el.style.border = `1px solid ${type === 'error' ? '#c0392b' : type === 'info' ? 'var(--accent)' : '#2ecc71'}`;
+  el.style.color = type === 'error' ? '#e74c3c' : type === 'info' ? 'var(--accent)' : '#2ecc71';
+  el.textContent = msg;
+}
+
+function showLoadingOverlay(show) {
+  let el = document.getElementById('sb-loading');
+  if (show) {
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'sb-loading';
+      el.style.cssText = 'position:fixed;inset:0;background:rgba(6,13,20,.85);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;';
+      el.innerHTML = '<div style="width:40px;height:40px;border:3px solid rgba(144,224,239,.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div><div style="color:var(--accent);font-family:\'DM Sans\',sans-serif;font-size:14px;">Loading data…</div>';
+      if (!document.querySelector('#sb-spin-style')) {
+        const s = document.createElement('style');
+        s.id = 'sb-spin-style';
+        s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(s);
+      }
+      document.body.appendChild(el);
+    }
+    el.style.display = 'flex';
+  } else {
+    if (el) el.style.display = 'none';
+  }
+}
+
+function showToast(msg, type = 'info') {
+  const toast = document.createElement('div');
+  toast.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;background:${type==='error'?'#c0392b':'var(--surface2)'};color:${type==='error'?'#fff':'var(--text)'};padding:12px 20px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:320px;`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+
+function getDefaultData() {
+  return {
+    entries: [],
+    employees: getDefaultEmployees(),
+    billingRates: getDefaultBillingRates(),
+    billingMisc: {}
+  };
+}
+
+// ==========================================
+// DEFAULT EMPLOYEE DATABASE
+// ==========================================
+function getDefaultEmployees() {
+  return [
+    // JOCY
+    {name:'Jocy',property:'Dream Carpenter',clean:160,inspect:20},
+    {name:'Jocy',property:'Dream Claremont 1',clean:105,inspect:20},
+    {name:'Jocy',property:'Dream Claremont 2',clean:105,inspect:20},
+    {name:'Jocy',property:'Dream Claremont Ground',clean:90,inspect:20},
+    {name:'Jocy',property:'Dream Chicago Penthouse',clean:120,inspect:20},
+    {name:'Jocy',property:'Dream Chicago Unit 2',clean:120,inspect:20},
+    {name:'Jocy',property:'Dream Chicago Unit 3',clean:120,inspect:20},
+    {name:'Jocy',property:'Dream Evergreen',clean:85,inspect:25},
+    {name:'Jocy',property:'Dream Forest Park',clean:95,inspect:20},
+    {name:'Jocy',property:'Dream Polk 101',clean:90,inspect:20},
+    {name:'Jocy',property:'Dream Polk 102',clean:90,inspect:20},
+    {name:'Jocy',property:'Dream Grand 203',clean:90,inspect:20},
+    {name:'Jocy',property:'Dream Grand 204',clean:90,inspect:20},
+    {name:'Jocy',property:'Dream Grand 403',clean:90,inspect:20},
+    {name:'Jocy',property:'Dream Michigan',clean:120,inspect:20},
+    {name:'Jocy',property:'Dream 2018 W 21st Pl',clean:130,inspect:20},
+    {name:'Jocy',property:'Dream Straits 1309',clean:120,inspect:20},
+    {name:'Jocy',property:'Dream Straits 1409',clean:120,inspect:20},
+    {name:'Jocy',property:'Dream Straits 1509',clean:120,inspect:20},
+    {name:'Jocy',property:'Dream Winthrop 311',clean:95,inspect:20},
+    {name:'Jocy',property:'Dream Winthrop 506',clean:95,inspect:20},
+    {name:'Jocy',property:'Dream Winthrop 507',clean:95,inspect:20},
+    {name:'Jocy',property:'Dream Throop',clean:0,inspect:30},
+    {name:'Jocy',property:'Daniel Throop',clean:80,inspect:20},
+    {name:'Jocy',property:'Thomas Fry',clean:80,inspect:20},
+    {name:'Jocy',property:'Thomas Belle',clean:100,inspect:20},
+    {name:'Jocy',property:'Thomas George',clean:80,inspect:20},
+    {name:'Jocy',property:'Thomas Forest Park',clean:100,inspect:10},
+    {name:'Jocy',property:'Dwellish Erie',clean:160,inspect:30},
+    {name:'Jocy',property:'Dwellish Southport',clean:120,inspect:25},
+    {name:'Jocy',property:'Angela Home',clean:130,inspect:15},
+    {name:'Jocy',property:'Noble George 2',clean:100,inspect:20},
+    {name:'Jocy',property:'Noble George 3',clean:95,inspect:20},
+    {name:'Jocy',property:'Noble Fry 2S',clean:100,inspect:10},
+    {name:'Jocy',property:'Jorge Old Chicago',clean:110,inspect:20},
+    {name:'Jocy',property:'Augusta 1E',clean:120,inspect:20},
+    {name:'Jocy',property:'Augusta 1W',clean:120,inspect:20},
+    {name:'Jocy',property:'Misc',clean:0,inspect:0},
+    {name:'Jocy',property:'Bonus',clean:0,inspect:0},
+    // AMANDA
+    {name:'Amanda',property:'Dream Crocus',clean:170,inspect:0},
+    {name:'Amanda',property:'Kinga 60th',clean:175,inspect:0},
+    {name:'Amanda',property:'Kinga Shea',clean:175,inspect:0},
+    {name:'Amanda',property:'Dream Scottsdale',clean:190,inspect:0},
+    {name:'Amanda',property:'Dream Old Town AZ',clean:140,inspect:0},
+    {name:'Amanda',property:'Lotus Heatherbrae',clean:165,inspect:0},
+    {name:'Amanda',property:'Lotus 78th',clean:100,inspect:0},
+    {name:'Amanda',property:'Lotus #116',clean:100,inspect:0},
+    {name:'Amanda',property:'Lotus #144',clean:100,inspect:0},
+    {name:'Amanda',property:'Lotus Garfield',clean:130,inspect:0},
+    {name:'Amanda',property:'Lotus Thompson',clean:100,inspect:0},
+    {name:'Amanda',property:'Ethos/ Racine',clean:180,inspect:0},
+    {name:'Amanda',property:'Misc',clean:0,inspect:0},
+    // ADRIANA
+    {name:'Adriana',property:'Dream Carpenter',clean:140,inspect:0},
+    {name:'Adriana',property:'Dream Paulina',clean:70,inspect:0},
+    {name:'Adriana',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Adriana',property:'Augusta 1E',clean:100,inspect:0},
+    {name:'Adriana',property:'Augusta 1W',clean:100,inspect:0},
+    {name:'Adriana',property:'Dream Magnolia',clean:150,inspect:0},
+    {name:'Adriana',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Adriana',property:'Dream Chicago Unit 3',clean:100,inspect:0},
+    {name:'Adriana',property:'Dream Michigan',clean:100,inspect:0},
+    {name:'Adriana',property:'Dream Chicago Penthouse',clean:100,inspect:0},
+    {name:'Adriana',property:'Dream Straits 1409',clean:100,inspect:0},
+    {name:'Adriana',property:'Thomas George',clean:65,inspect:0},
+    {name:'Adriana',property:'Jorge Old Chicago',clean:90,inspect:0},
+    // ANNA MACIATA
+    {name:'Anna Maciata',property:'Dream Washington House',clean:200,inspect:0},
+    {name:'Anna Maciata',property:'Dream Polk 201',clean:90,inspect:0},
+    {name:'Anna Maciata',property:'Dream Polk 202',clean:90,inspect:0},
+    {name:'Anna Maciata',property:'Dream Polk 203',clean:90,inspect:0},
+    {name:'Anna Maciata',property:'Dream Polk 204',clean:90,inspect:0},
+    {name:'Anna Maciata',property:'Dream Polk 205',clean:90,inspect:0},
+    {name:'Anna Maciata',property:'Misc',clean:0,inspect:0},
+    {name:'Anna Maciata',property:'Bonus',clean:0,inspect:0},
+    // ANNIE
+    {name:'Annie',property:'Dream Huron',clean:120,inspect:0},
+    {name:'Annie',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Annie',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Annie',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Annie',property:'Dream Claremont 3',clean:85,inspect:0},
+    {name:'Annie',property:'Dream Chicago',clean:100,inspect:0},
+    {name:'Annie',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Annie',property:'Dream Magnolia',clean:150,inspect:0},
+    {name:'Annie',property:'Dwellish Wilton',clean:130,inspect:0},
+    {name:'Annie',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Annie',property:'Dwellish GKL 20',clean:100,inspect:0},
+    {name:'Annie',property:'Dwellish GKL 20 Arrival',clean:120,inspect:0},
+    {name:'Annie',property:'Dwellish GKL 14',clean:220,inspect:0},
+    {name:'Annie',property:'Dwellish Southport',clean:95,inspect:0},
+    {name:'Annie',property:'Thomas Old Chicago',clean:90,inspect:0},
+    {name:'Annie',property:'Thomas Fry',clean:60,inspect:0},
+    {name:'Annie',property:'Thomas George',clean:65,inspect:0},
+    {name:'Annie',property:'Misc',clean:0,inspect:0},
+    // ANTONINA WISZNIEWSKI
+    {name:'Antonina Wiszniewski',property:'Dream Polk 202',clean:90,inspect:0},
+    {name:'Antonina Wiszniewski',property:'Dream Polk 203',clean:90,inspect:0},
+    {name:'Antonina Wiszniewski',property:'Dream Polk 204',clean:90,inspect:0},
+    {name:'Antonina Wiszniewski',property:'Dream Bingham',clean:200,inspect:0},
+    {name:'Antonina Wiszniewski',property:'Dream Bell',clean:240,inspect:0},
+    {name:'Antonina Wiszniewski',property:'Dream Paulina',clean:70,inspect:0},
+    {name:'Antonina Wiszniewski',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Antonina Wiszniewski',property:'Dream Washington House',clean:200,inspect:0},
+    {name:'Antonina Wiszniewski',property:'Augusta 1W',clean:100,inspect:0},
+    // BEATRIZ
+    {name:'Beatriz',property:'Dream Largo',clean:200,inspect:0},
+    {name:'Beatriz',property:'Misc',clean:0,inspect:0},
+    // CAMILA
+    {name:'Camila',property:'Dream Evergreen',clean:60,inspect:0},
+    {name:'Camila',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Camila',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Camila',property:'Dream Claremont 3',clean:85,inspect:0},
+    {name:'Camila',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Camila',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Camila',property:'Dream Chicago Penthouse',clean:100,inspect:0},
+    {name:'Camila',property:'Dream Chicago Unit 2',clean:100,inspect:0},
+    {name:'Camila',property:'Dream Chicago Unit 3',clean:100,inspect:0},
+    {name:'Camila',property:'Dream Ashland',clean:120,inspect:0},
+    {name:'Camila',property:'Dream Patterson',clean:140,inspect:0},
+    {name:'Camila',property:'Dream Polk 101',clean:80,inspect:0},
+    {name:'Camila',property:'Dream Polk 102',clean:80,inspect:0},
+    {name:'Camila',property:'Dream Grand 203',clean:70,inspect:0},
+    {name:'Camila',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Camila',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Camila',property:'Dream Michigan',clean:100,inspect:0},
+    {name:'Camila',property:'Dream Wayman',clean:80,inspect:0},
+    {name:'Camila',property:'Dream Forest Park',clean:75,inspect:0},
+    {name:'Camila',property:'Dream Straits 1309',clean:100,inspect:0},
+    {name:'Camila',property:'Dream Straits 1509',clean:100,inspect:0},
+    {name:'Camila',property:'Dream Straits 1409',clean:100,inspect:0},
+    {name:'Camila',property:'Thomas Fry',clean:60,inspect:0},
+    {name:'Camila',property:'Thomas George',clean:65,inspect:0},
+    {name:'Camila',property:'Thomas Forest Park',clean:90,inspect:0},
+    {name:'Camila',property:'Dwellish Drexel',clean:130,inspect:0},
+    {name:'Camila',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Camila',property:'Dwellish Southport',clean:95,inspect:0},
+    {name:'Camila',property:'Augusta 1E',clean:100,inspect:0},
+    {name:'Camila',property:'Augusta 1W',clean:100,inspect:0},
+    {name:'Camila',property:'Angela Oak Park',clean:120,inspect:0},
+    {name:'Camila',property:'Angela Home',clean:115,inspect:0},
+    {name:'Camila',property:'Noble George 2',clean:75,inspect:0},
+    {name:'Camila',property:'Noble George 3',clean:65,inspect:0},
+    {name:'Camila',property:'Misc',clean:0,inspect:0},
+    // CLAUDIA
+    {name:'Claudia',property:'Dream Magnolia',clean:150,inspect:0},
+    {name:'Claudia',property:'Dream Beach',clean:200,inspect:0},
+    {name:'Claudia',property:'Dream Coutler',clean:200,inspect:0},
+    {name:'Claudia',property:'Dream Huron',clean:120,inspect:0},
+    {name:'Claudia',property:'Dream Ohio',clean:90,inspect:0},
+    {name:'Claudia',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Claudia',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Claudia',property:'Dream 17th Pilsen',clean:110,inspect:0},
+    {name:'Claudia',property:'Dream 18th Pilsen',clean:85,inspect:0},
+    {name:'Claudia',property:'Dream 21st Pilsen',clean:120,inspect:0},
+    {name:'Claudia',property:'Dream Ashland',clean:120,inspect:0},
+    {name:'Claudia',property:'Dream Willard',clean:120,inspect:0},
+    {name:'Claudia',property:'Dream Bingham',clean:200,inspect:0},
+    {name:'Claudia',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Claudia',property:'Village Inn',clean:130,inspect:0},
+    {name:'Claudia',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Claudia',property:'Dwellish Hermitage',clean:80,inspect:0},
+    {name:'Claudia',property:'Dwellish Southport',clean:95,inspect:0},
+    {name:'Claudia',property:'Dream Fairfield',clean:240,inspect:0},
+    {name:'Claudia',property:'Misc',clean:0,inspect:0},
+    {name:'Claudia',property:'Bonus',clean:0,inspect:0},
+    // CONNIE
+    {name:'Connie',property:'Dream Evergreen',clean:60,inspect:0},
+    {name:'Connie',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Connie',property:'Dream Claremont 3',clean:85,inspect:0},
+    {name:'Connie',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Connie',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Connie',property:'Dream 2018 W 21st Pl',clean:110,inspect:0},
+    {name:'Connie',property:'Dream Chicago Penthouse',clean:100,inspect:0},
+    {name:'Connie',property:'Dream Chicago Unit 2',clean:100,inspect:0},
+    {name:'Connie',property:'Dream Chicago Unit 3',clean:100,inspect:0},
+    {name:'Connie',property:'Dream Ashland',clean:120,inspect:0},
+    {name:'Connie',property:'Dream Grand 203',clean:70,inspect:0},
+    {name:'Connie',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Connie',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Connie',property:'Dream Michigan',clean:100,inspect:0},
+    {name:'Connie',property:'Dream Throop',clean:270,inspect:0},
+    {name:'Connie',property:'Thomas Fry',clean:60,inspect:0},
+    {name:'Connie',property:'Thomas Old Chicago',clean:90,inspect:0},
+    {name:'Connie',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Connie',property:'Dream Forest Park',clean:75,inspect:0},
+    {name:'Connie',property:'Thomas Forest Park',clean:90,inspect:0},
+    // CORY
+    {name:'Cory',property:'Dream Huron',clean:120,inspect:0},
+    {name:'Cory',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Cory',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Cory',property:'Dream Claremont 3',clean:85,inspect:0},
+    {name:'Cory',property:'Dream Chicago',clean:100,inspect:0},
+    {name:'Cory',property:'Dream Michigan',clean:100,inspect:0},
+    {name:'Cory',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Cory',property:'Dream Nevele 708',clean:106,inspect:0},
+    {name:'Cory',property:'Dream Coutler',clean:200,inspect:0},
+    {name:'Cory',property:'Dream Magnolia',clean:150,inspect:0},
+    {name:'Cory',property:'Dream Bingham',clean:200,inspect:0},
+    {name:'Cory',property:'Dream Throop',clean:270,inspect:0},
+    {name:'Cory',property:'Dream Ohio',clean:90,inspect:0},
+    {name:'Cory',property:'Dream Grand 203',clean:70,inspect:0},
+    {name:'Cory',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Cory',property:'Dwellish GKL 14',clean:220,inspect:0},
+    {name:'Cory',property:'Dwellish GKL 20',clean:100,inspect:0},
+    {name:'Cory',property:'Dream Forest Park',clean:75,inspect:0},
+    {name:'Cory',property:'Dream Fairfield',clean:240,inspect:0},
+    {name:'Cory',property:'Dream Patterson',clean:140,inspect:0},
+    {name:'Cory',property:'Dream 2018 W 21st Pl',clean:110,inspect:0},
+    {name:'Cory',property:'Dwellish Wilton',clean:130,inspect:0},
+    {name:'Cory',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Cory',property:'Thomas Andersonville',clean:224,inspect:0},
+    {name:'Cory',property:'Thomas Forest Park',clean:90,inspect:0},
+    {name:'Cory',property:'Thomas Old Chicago',clean:90,inspect:0},
+    {name:'Cory',property:'Thomas Belle',clean:80,inspect:0},
+    {name:'Cory',property:'Thomas Fry',clean:60,inspect:0},
+    {name:'Cory',property:'Thomas George',clean:65,inspect:0},
+    {name:'Cory',property:'Thomas River N',clean:100,inspect:0},
+    {name:'Cory',property:'Thomas Ellis',clean:85,inspect:0},
+    {name:'Cory',property:'Noble George 2',clean:75,inspect:0},
+    {name:'Cory',property:'Noble George 3',clean:65,inspect:0},
+    {name:'Cory',property:'Angela Home',clean:115,inspect:0},
+    {name:'Cory',property:'Misc',clean:0,inspect:0},
+    {name:'Cory',property:'Bonus',clean:0,inspect:0},
+    // GABBIE
+    {name:'Gabbie',property:'Dream Huron',clean:120,inspect:0},
+    {name:'Gabbie',property:'Dream Evergreen',clean:60,inspect:0},
+    {name:'Gabbie',property:'Dream Magnolia',clean:150,inspect:0},
+    {name:'Gabbie',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Gabbie',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Gabbie',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Gabbie',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Gabbie',property:'Dream Claremont 3',clean:85,inspect:0},
+    {name:'Gabbie',property:'Dream Beach',clean:200,inspect:0},
+    {name:'Gabbie',property:'Dream Ashland',clean:120,inspect:0},
+    {name:'Gabbie',property:'Dwellish Wilton',clean:130,inspect:0},
+    {name:'Gabbie',property:'Dream Winthrop 311',clean:75,inspect:0},
+    {name:'Gabbie',property:'Dream Winthrop 506',clean:75,inspect:0},
+    {name:'Gabbie',property:'Dream Winthrop 507',clean:75,inspect:0},
+    {name:'Gabbie',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Gabbie',property:'Dwellish Southport',clean:95,inspect:0},
+    {name:'Gabbie',property:'Dwellish GKL 14',clean:220,inspect:0},
+    {name:'Gabbie',property:'Dwellish GKL 20',clean:100,inspect:0},
+    {name:'Gabbie',property:'Dwellish GKL 20 arrival',clean:120,inspect:0},
+    {name:'Gabbie',property:'Marco Jeff Park',clean:70,inspect:0},
+    {name:'Gabbie',property:'Thomas George',clean:65,inspect:0},
+    {name:'Gabbie',property:'Thomas George 2',clean:65,inspect:0},
+    {name:'Gabbie',property:'Thomas George 3',clean:65,inspect:0},
+    {name:'Gabbie',property:'Thomas Belle',clean:80,inspect:0},
+    {name:'Gabbie',property:'Augusta 1W',clean:100,inspect:0},
+    {name:'Gabbie',property:'Dream Patterson',clean:140,inspect:0},
+    {name:'Gabbie',property:'Misc',clean:0,inspect:0},
+    {name:'Gabbie',property:'Bonus',clean:0,inspect:0},
+    // IVANNA
+    {name:'Ivanna',property:'Dream Washington House',clean:200,inspect:0},
+    {name:'Ivanna',property:'Dream Paulina',clean:70,inspect:0},
+    {name:'Ivanna',property:'Dream Polk 101',clean:80,inspect:0},
+    {name:'Ivanna',property:'Dream Polk 201',clean:90,inspect:0},
+    {name:'Ivanna',property:'Dream Polk 202',clean:90,inspect:0},
+    {name:'Ivanna',property:'Dream Polk 203',clean:90,inspect:0},
+    {name:'Ivanna',property:'Dream Polk 204',clean:90,inspect:0},
+    {name:'Ivanna',property:'Dream Polk 205',clean:90,inspect:0},
+    {name:'Ivanna',property:'Dream Bingham',clean:200,inspect:0},
+    {name:'Ivanna',property:'Dream Beach',clean:200,inspect:0},
+    {name:'Ivanna',property:'Dream Fairfield',clean:240,inspect:0},
+    {name:'Ivanna',property:'Dream Huron',clean:120,inspect:0},
+    {name:'Ivanna',property:'Dream Willard',clean:120,inspect:0},
+    {name:'Ivanna',property:'Dream Coutler',clean:200,inspect:0},
+    {name:'Ivanna',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Ivanna',property:'Dream 17th Pilsen',clean:110,inspect:0},
+    {name:'Ivanna',property:'Dream Carpenter',clean:140,inspect:0},
+    {name:'Ivanna',property:'Dream Race',clean:220,inspect:0},
+    {name:'Ivanna',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Ivanna',property:'Thomas Forest Park',clean:90,inspect:0},
+    {name:'Ivanna',property:'Misc',clean:0,inspect:0},
+    {name:'Ivanna',property:'Bonus',clean:0,inspect:0},
+    // JANE MN
+    {name:'Jane MN',property:'Dream Buffalo',clean:150,inspect:0},
+    {name:'Jane MN',property:'Dream McLean',clean:150,inspect:0},
+    {name:'Jane MN',property:'Dream Ruth',clean:150,inspect:0},
+    {name:'Jane MN',property:'Dream KC',clean:150,inspect:0},
+    {name:'Jane MN',property:'Misc',clean:0,inspect:0},
+    // JENNIFER
+    {name:'Jennifer',property:'Dream Buffalo',clean:150,inspect:0},
+    {name:'Jennifer',property:'Dream Lakehouse',clean:240,inspect:0},
+    {name:'Jennifer',property:'Dream Cottonwood',clean:230,inspect:0},
+    {name:'Jennifer',property:'Dream McLean',clean:150,inspect:0},
+    {name:'Jennifer',property:'Dream Ruth',clean:150,inspect:0},
+    {name:'Jennifer',property:'Dream KC',clean:150,inspect:0},
+    {name:'Jennifer',property:'Misc',clean:0,inspect:0},
+    // KATYA
+    {name:'Katya',property:'Angela Oak Park',clean:120,inspect:0},
+    {name:'Katya',property:'Dream Carpenter',clean:140,inspect:0},
+    {name:'Katya',property:'Dream Polk 101',clean:80,inspect:0},
+    {name:'Katya',property:'Dream Polk 201',clean:90,inspect:0},
+    {name:'Katya',property:'Dream Polk 202',clean:90,inspect:0},
+    {name:'Katya',property:'Dream Polk 203',clean:90,inspect:0},
+    {name:'Katya',property:'Dream Polk 204',clean:90,inspect:0},
+    {name:'Katya',property:'Dream Polk 205',clean:90,inspect:0},
+    {name:'Katya',property:'Dream Bingham',clean:200,inspect:0},
+    {name:'Katya',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Katya',property:'Dream Coutler',clean:200,inspect:0},
+    {name:'Katya',property:'Dream Beach',clean:200,inspect:0},
+    {name:'Katya',property:'Dream 18th Pilsen',clean:85,inspect:0},
+    {name:'Katya',property:'Dream Throop',clean:270,inspect:0},
+    {name:'Katya',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Katya',property:'Dream Winthrop 311',clean:75,inspect:0},
+    {name:'Katya',property:'Dream Winthrop 506',clean:75,inspect:0},
+    {name:'Katya',property:'Dream Washington House',clean:200,inspect:0},
+    {name:'Katya',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Katya',property:'Misc',clean:0,inspect:0},
+    {name:'Katya',property:'Bonus',clean:0,inspect:0},
+    // KRYSTINA
+    {name:'Krystina',property:'Dream Huron',clean:120,inspect:0},
+    {name:'Krystina',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Krystina',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Krystina',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Krystina',property:'Dream Claremont 3',clean:85,inspect:0},
+    {name:'Krystina',property:'Dream Chicago',clean:100,inspect:0},
+    {name:'Krystina',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Krystina',property:'Dream Magnolia',clean:150,inspect:0},
+    {name:'Krystina',property:'Dwellish GKL 14',clean:220,inspect:0},
+    {name:'Krystina',property:'Dwellish GKL 20',clean:100,inspect:0},
+    {name:'Krystina',property:'Dwellish Wilton',clean:130,inspect:0},
+    {name:'Krystina',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Krystina',property:'Dwellish Southport',clean:95,inspect:0},
+    {name:'Krystina',property:'Thomas Old Chicago',clean:90,inspect:0},
+    {name:'Krystina',property:'Thomas Belle',clean:80,inspect:0},
+    {name:'Krystina',property:'Thomas Fry',clean:60,inspect:0},
+    {name:'Krystina',property:'Thomas George',clean:65,inspect:0},
+    {name:'Krystina',property:'Thomas George 2',clean:65,inspect:0},
+    {name:'Krystina',property:'Thomas George 3',clean:65,inspect:0},
+    {name:'Krystina',property:'Misc',clean:0,inspect:0},
+    {name:'Krystina',property:'Bonus',clean:0,inspect:0},
+    // LEXIE
+    {name:'Lexie',property:'Dream Polk 101',clean:80,inspect:0},
+    {name:'Lexie',property:'Dream Polk 102',clean:80,inspect:0},
+    {name:'Lexie',property:'Dream Grand 203',clean:70,inspect:0},
+    {name:'Lexie',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Lexie',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Lexie',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Lexie',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Lexie',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Lexie',property:'Dream 17th Pilsen',clean:110,inspect:0},
+    {name:'Lexie',property:'Dream Chicago Unit 2',clean:100,inspect:0},
+    {name:'Lexie',property:'Dream Chicago Unit 3',clean:100,inspect:0},
+    {name:'Lexie',property:'Dream 2018 W 21st Pl',clean:110,inspect:0},
+    {name:'Lexie',property:'Dream Chicago Penthouse',clean:100,inspect:0},
+    {name:'Lexie',property:'Dream Michigan',clean:100,inspect:0},
+    {name:'Lexie',property:'Dream Wayman',clean:80,inspect:0},
+    {name:'Lexie',property:'Dream 18th Pilsen',clean:85,inspect:0},
+    {name:'Lexie',property:'Dwellish Drexel',clean:130,inspect:0},
+    {name:'Lexie',property:'Jorge Old Chicago',clean:90,inspect:0},
+    {name:'Lexie',property:'Thomas Belle',clean:80,inspect:0},
+    {name:'Lexie',property:'Thomas Fry',clean:60,inspect:0},
+    {name:'Lexie',property:'2018 21st Jack',clean:100,inspect:0},
+    {name:'Lexie',property:'Misc',clean:0,inspect:0},
+    // LUANA
+    {name:'Luana',property:'Dream Throop',clean:270,inspect:0},
+    {name:'Luana',property:'Dream Chicago Unit 3',clean:100,inspect:0},
+    {name:'Luana',property:'Dream Chicago Penthouse',clean:100,inspect:0},
+    {name:'Luana',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Luana',property:'Dwellish Drexel',clean:130,inspect:0},
+    {name:'Luana',property:'Dream Polk 101',clean:80,inspect:0},
+    {name:'Luana',property:'Dream Polk 102',clean:80,inspect:0},
+    {name:'Luana',property:'Dream Grand 203',clean:70,inspect:0},
+    {name:'Luana',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Luana',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Luana',property:'Dream Michigan',clean:100,inspect:0},
+    {name:'Luana',property:'Dream Straits 1309',clean:100,inspect:0},
+    {name:'Luana',property:'Dream Straits 1409',clean:100,inspect:0},
+    {name:'Luana',property:'Dream Straits 1509',clean:100,inspect:0},
+    {name:'Luana',property:'Dream 2018 W 21st Pl',clean:110,inspect:0},
+    {name:'Luana',property:'Dream Wayman',clean:80,inspect:0},
+    {name:'Luana',property:'Daniel Throop',clean:60,inspect:0},
+    {name:'Luana',property:'Thomas Belle',clean:80,inspect:0},
+    {name:'Luana',property:'Thomas Fry',clean:60,inspect:0},
+    {name:'Luana',property:'Thomas Old Chicago',clean:90,inspect:0},
+    {name:'Luana',property:'Jorge Old Chicago',clean:90,inspect:0},
+    {name:'Luana',property:'Noble Fry 2S',clean:90,inspect:0},
+    {name:'Luana',property:'Misc',clean:0,inspect:0},
+    // LUCY
+    {name:'Lucy',property:'Dream Polk 202',clean:90,inspect:0},
+    {name:'Lucy',property:'Dream Polk 203',clean:90,inspect:0},
+    {name:'Lucy',property:'Dream Polk 204',clean:90,inspect:0},
+    {name:'Lucy',property:'Dream Polk 205',clean:90,inspect:0},
+    {name:'Lucy',property:'Dream Beach',clean:200,inspect:0},
+    {name:'Lucy',property:'Dream Washington',clean:200,inspect:0},
+    {name:'Lucy',property:'Dream Paulina',clean:70,inspect:0},
+    {name:'Lucy',property:'Dream Race',clean:220,inspect:0},
+    {name:'Lucy',property:'Dream Bingham',clean:200,inspect:0},
+    {name:'Lucy',property:'Dream Throop',clean:270,inspect:0},
+    // NATALLIA
+    {name:'Natallia',property:'Dream Polk 201',clean:90,inspect:0},
+    {name:'Natallia',property:'Dream Polk 202',clean:90,inspect:0},
+    {name:'Natallia',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Natallia',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Natallia',property:'Dream Bell',clean:240,inspect:0},
+    {name:'Natallia',property:'Dream Bingham',clean:200,inspect:0},
+    {name:'Natallia',property:'Dream Coutler',clean:200,inspect:0},
+    {name:'Natallia',property:'Dream Huron',clean:120,inspect:0},
+    {name:'Natallia',property:'Dream Fairfield',clean:240,inspect:0},
+    {name:'Natallia',property:'Dream Race',clean:220,inspect:0},
+    {name:'Natallia',property:'Dream Throop',clean:270,inspect:0},
+    {name:'Natallia',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Natallia',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Natallia',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Natallia',property:'Dream Paulina',clean:70,inspect:0},
+    {name:'Natallia',property:'Dream Washington House',clean:200,inspect:0},
+    {name:'Natallia',property:'Dream Washington Apt 1',clean:120,inspect:0},
+    {name:'Natallia',property:'Dream Washington Apt 2',clean:120,inspect:0},
+    {name:'Natallia',property:'Dream Washington Apt 3',clean:120,inspect:0},
+    {name:'Natallia',property:'Dream Wayman',clean:80,inspect:0},
+    {name:'Natallia',property:'Misc',clean:0,inspect:0},
+    // SABRINA
+    {name:'Sabrina',property:'Dream Evergreen',clean:60,inspect:0},
+    {name:'Sabrina',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Sabrina',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Sabrina',property:'Dream Claremont 3',clean:85,inspect:0},
+    {name:'Sabrina',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Sabrina',property:'Dream Nevele',clean:106,inspect:0},
+    {name:'Sabrina',property:'Dream Nevele 708',clean:106,inspect:0},
+    {name:'Sabrina',property:'Dream Chicago Penthouse',clean:100,inspect:0},
+    {name:'Sabrina',property:'Dream Chicago Unit 2',clean:100,inspect:0},
+    {name:'Sabrina',property:'Dream Chicago Unit 3',clean:100,inspect:0},
+    {name:'Sabrina',property:'Dream Ashland',clean:120,inspect:0},
+    {name:'Sabrina',property:'Dream Polk 101',clean:80,inspect:0},
+    {name:'Sabrina',property:'Dream Polk 102',clean:80,inspect:0},
+    {name:'Sabrina',property:'Dream Grand 203',clean:70,inspect:0},
+    {name:'Sabrina',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Sabrina',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Sabrina',property:'Dream Wayman',clean:80,inspect:0},
+    {name:'Sabrina',property:'Dream Magnolia',clean:150,inspect:0},
+    {name:'Sabrina',property:'Dream Michigan',clean:100,inspect:0},
+    {name:'Sabrina',property:'Dream 21st Pilsen',clean:120,inspect:0},
+    {name:'Sabrina',property:'Dream Straits 1309',clean:100,inspect:0},
+    {name:'Sabrina',property:'Dream Straits 1409',clean:100,inspect:0},
+    {name:'Sabrina',property:'Dream Straits 1509',clean:100,inspect:0},
+    {name:'Sabrina',property:'Dream Forest Park',clean:75,inspect:0},
+    {name:'Sabrina',property:'Thomas Forest Park',clean:90,inspect:0},
+    {name:'Sabrina',property:'Thomas Fry',clean:60,inspect:0},
+    {name:'Sabrina',property:'Thomas George',clean:65,inspect:0},
+    {name:'Sabrina',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Sabrina',property:'Dwellish Drexel',clean:130,inspect:0},
+    {name:'Sabrina',property:'Angela Oak Park',clean:120,inspect:0},
+    {name:'Sabrina',property:'Augusta 1E',clean:100,inspect:0},
+    {name:'Sabrina',property:'Augusta 1W',clean:100,inspect:0},
+    {name:'Sabrina',property:'Marco Jeff Park',clean:70,inspect:0},
+    {name:'Sabrina',property:'Noble George 3',clean:65,inspect:0},
+    {name:'Sabrina',property:'Misc',clean:0,inspect:0},
+    {name:'Sabrina',property:'Bonus',clean:0,inspect:0},
+    // VANESSA VINCENTE
+    {name:'Vanessa Vincente',property:'Dream Old Town AZ',clean:140,inspect:0},
+    {name:'Vanessa Vincente',property:'Dream Scottsdale',clean:190,inspect:0},
+    {name:'Vanessa Vincente',property:'Dream Crocus',clean:170,inspect:0},
+    {name:'Vanessa Vincente',property:'Dream Houston',clean:140,inspect:0},
+    {name:'Vanessa Vincente',property:'Ethos/ Racine',clean:180,inspect:0},
+    {name:'Vanessa Vincente',property:'Kinga Cactus',clean:175,inspect:0},
+    {name:'Vanessa Vincente',property:'Kinga 60th',clean:175,inspect:0},
+    {name:'Vanessa Vincente',property:'Kinga Shea',clean:175,inspect:0},
+    {name:'Vanessa Vincente',property:'Kinga Sweet',clean:225,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus 34th',clean:100,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus #116',clean:100,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus #144',clean:100,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus 78th',clean:100,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus Arcadia',clean:80,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus Fern',clean:120,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus Garfield',clean:130,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus Glenrosa',clean:110,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus Heatherbrae',clean:165,inspect:0},
+    {name:'Vanessa Vincente',property:'Lotus Thompson',clean:100,inspect:0},
+    // WENDY
+    {name:'Wendy',property:'Dream Houston 2103',clean:140,inspect:0},
+    {name:'Wendy',property:'Dream Houston 2105',clean:140,inspect:0},
+    {name:'Wendy',property:'Dream Houston 2107',clean:140,inspect:0},
+    {name:'Wendy',property:'Dream Houston 2109',clean:140,inspect:0},
+    {name:'Wendy',property:'Dream Houston 2107 + 2109',clean:280,inspect:0},
+    {name:'Wendy',property:'Dream Houston 2103 + 2105',clean:280,inspect:0},
+    {name:'Wendy',property:'Misc',clean:0,inspect:0},
+    {name:'Wendy',property:'Bonus',clean:0,inspect:0},
+    // YURY
+    {name:'Yury',property:'Dream Spring Grove',clean:100,inspect:0},
+    {name:'Yury',property:'Misc',clean:0,inspect:0},
+    // KATYA ABDYMAZHITOVA
+    {name:'Katya Abdymazhitova',property:'Augusta 1W',clean:100,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dream Carpenter',clean:140,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dream Winthrop',clean:75,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dream Winthrop 412',clean:75,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dream Winthrop 311',clean:75,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dream Winthrop 312',clean:75,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dream Winthrop 411',clean:75,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dream Winthrop 506',clean:75,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dream Winthrop 507',clean:75,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Dwellish Warner',clean:95,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Thomas Belle',clean:80,inspect:0},
+    {name:'Katya Abdymazhitova',property:'Misc',clean:0,inspect:0},
+    // ELIZABETH
+    {name:'Elizabeth',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Elizabeth',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Elizabeth',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Elizabeth',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Elizabeth',property:'Noble George 2',clean:75,inspect:0},
+    {name:'Elizabeth',property:'Noble George 3',clean:65,inspect:0},
+    {name:'Elizabeth',property:'Thomas George',clean:65,inspect:0},
+    {name:'Elizabeth',property:'Misc',clean:0,inspect:0},
+    // TAMMY
+    {name:'Tammy',property:'Dream Nekoosa',clean:300,inspect:0},
+    {name:'Tammy',property:'Misc',clean:0,inspect:0},
+    // IONA
+    {name:'Iona',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Iona',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Iona',property:'Dream Grand 203',clean:70,inspect:0},
+    {name:'Iona',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Iona',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Iona',property:'Thomas George',clean:65,inspect:0},
+    {name:'Iona',property:'Noble George 2',clean:75,inspect:0},
+    {name:'Iona',property:'Noble George 3',clean:65,inspect:0},
+    {name:'Iona',property:'Misc',clean:0,inspect:0},
+    // BRECHELLE
+    {name:'Brechelle',property:'Dream Spearfish',clean:265,inspect:0},
+    {name:'Brechelle',property:'Misc',clean:0,inspect:0},
+    // IMELDA
+    {name:'Imelda',property:'Dream Carpenter',clean:140,inspect:0},
+    {name:'Imelda',property:'Dream Claremont 1',clean:85,inspect:0},
+    {name:'Imelda',property:'Dream Claremont 2',clean:85,inspect:0},
+    {name:'Imelda',property:'Dream Claremont Ground',clean:70,inspect:0},
+    {name:'Imelda',property:'Dream Grand 203',clean:70,inspect:0},
+    {name:'Imelda',property:'Dream Grand 204',clean:70,inspect:0},
+    {name:'Imelda',property:'Dream Grand 403',clean:70,inspect:0},
+    {name:'Imelda',property:'Dream Patterson',clean:140,inspect:0},
+    {name:'Imelda',property:'Dwellish Southport',clean:95,inspect:0},
+    {name:'Imelda',property:'Dwellish Erie',clean:130,inspect:0},
+    {name:'Imelda',property:'Dwellish Ohio',clean:140,inspect:0},
+    {name:'Imelda',property:'Dwellish GKL 14',clean:220,inspect:0},
+    {name:'Imelda',property:'Dwellish GKL 20',clean:100,inspect:0},
+    {name:'Imelda',property:'Thomas George',clean:65,inspect:0},
+    {name:'Imelda',property:'Misc',clean:0,inspect:0},
+    // COREE
+    {name:'Coree',property:'Dream Montana',clean:300,inspect:0},
+    {name:'Coree',property:'Misc',clean:0,inspect:0},
+    // CARIDAD
+    {name:'Caridad',property:'Dream Front Street',clean:210,inspect:0},
+    {name:'Caridad',property:'Misc',clean:0,inspect:0},
+    // JORGE GALLARDO
+    {name:'Jorge Gallardo',property:'Jorge Old Chicago',clean:90,inspect:0},
+    {name:'Jorge Gallardo',property:'Misc',clean:0,inspect:0},
+  ];
+}
+
+// ==========================================
+// DEFAULT BILLING RATES
+// ==========================================
+function getDefaultBillingRates() {
+  return [
+    {property:'Dream Huron',rate:170},{property:'Dream Claremont Ground',rate:150},
+    {property:'Dream Claremont 2',rate:160},{property:'Dream Claremont 3',rate:160},
+    {property:'Dream Chicago',rate:180},{property:'Dream Nevele',rate:180},
+    {property:'Dream Magnolia',rate:210},{property:'Dream Bingham',rate:250},
+    {property:'Dream Largo',rate:210},{property:'Dream Evergreen',rate:135},
+    {property:'Dream Chicago Penthouse',rate:180},{property:'Dream Chicago Unit 2',rate:180},
+    {property:'Dream Chicago Unit 3',rate:180},{property:'Dream Ashland 407',rate:180},
+    {property:'Dream Grand 203',rate:140},{property:'Dream Grand 204',rate:140},
+    {property:'Dream Grand 403',rate:140},{property:'Dream Michigan',rate:170},
+    {property:'Dream Forest Park',rate:110},{property:'Dream Straits 1309',rate:185},
+    {property:'Dream Straits 1509',rate:185},{property:'Dream Straits 1409',rate:185},
+    {property:'Dream Beach',rate:260},{property:'Dream Coutler',rate:260},
+    {property:'Dream Ohio',rate:140},{property:'Dream 17th Pilsen',rate:170},
+    {property:'Dream 18th Pilsen',rate:130},{property:'Dream 21st Pilsen',rate:180},
+    {property:'Dream Ashland',rate:180},{property:'Dream Willard',rate:180},
+    {property:'Dream Throop',rate:320},{property:'Dream Grand',rate:140},
+    {property:'Dream Evanston',rate:140},{property:'Dream Buffalo',rate:165},
+    {property:'Dream McLean',rate:165},{property:'Dream Ruth',rate:160},
+    {property:'Dream Ruth 2',rate:170},{property:'Dream KC',rate:175},
+    {property:'Dream Lakehouse',rate:360},{property:'Dream Cottonwood',rate:280},
+    {property:'Dream Paulina',rate:130},{property:'Dream Nekoosa',rate:375},
+    {property:'Dream Claremont 1',rate:155},{property:'Dream Washington',rate:300},
+    {property:'Dream Race',rate:260},{property:'Dream Bell',rate:280},
+    {property:'Dream Fairfield',rate:320},{property:'Dream Washington Apt 1',rate:160},
+    {property:'Dream Washington Apt 2',rate:175},{property:'Dream Washington Apt 3',rate:175},
+    {property:'Dream Wayman',rate:140},{property:'Dream Claremont',rate:150},
+    {property:'Dream Old Town AZ',rate:180},{property:'Dream Scottsdale',rate:260},
+    {property:'Dream Crocus',rate:215},{property:'Dream Houston',rate:180},
+    {property:'Dream Houston 2103',rate:180},{property:'Dream Houston 2109',rate:180},
+    {property:'Dream Houston 2107',rate:180},{property:'Dream Houston 2105',rate:180},
+    {property:'Dream Spring Grove',rate:150},{property:'Dream Ohio 2',rate:140},
+    {property:'Dream Washington House',rate:300},{property:'Dream Washington Unit 4',rate:180},
+    {property:'Dream Nevele 708',rate:180},{property:'Dream Polk 201',rate:180},
+    {property:'Dream Polk 202',rate:180},{property:'Dream Polk 203',rate:180},
+    {property:'Dream Polk 204',rate:180},{property:'Dream Polk 205',rate:180},
+    {property:'Dream Polk 101',rate:180},{property:'Dream Polk 102',rate:180},
+    {property:'Dream Forest Park 2',rate:110},{property:'Dream 2018 W 21st Pl',rate:180},
+    {property:'Dream Carpenter',rate:220},{property:'Dream Spearfish',rate:0},
+    {property:'Dream South Dakota',rate:350},{property:'Dream Drexel',rate:220},
+    {property:'Dream Coutler 2.0',rate:260},{property:'Dream Houston 2107 + 2109',rate:360},
+    {property:'Thomas Old Chicago',rate:165},{property:'Thomas Fry',rate:130},
+    {property:'Thomas George',rate:125},{property:'Thomas Fry 2S',rate:125},
+    {property:'Thomas Forest Park',rate:150},{property:'Thomas Belle',rate:140},
+    {property:'Thomas River N',rate:200},{property:'Thomas Ellis',rate:125},
+    {property:'Thomas George 2',rate:125},{property:'Thomas George 3',rate:125},
+    {property:'Thomas Andersonville',rate:320},
+    {property:'Dwellish Wilton',rate:160},{property:'Dwellish Erie',rate:125},
+    {property:'Dwellish GKL 20',rate:320},{property:'Dwellish GKL 20 Arrival',rate:320},
+    {property:'Dwellish GKL 14',rate:320},{property:'Dwellish Southport',rate:170},
+    {property:'Dwellish Hermitage',rate:170},{property:'Dwellish South Washington',rate:240},
+    {property:'Dwellish Wilton 2',rate:160},{property:'Dwellish Drexel',rate:220},
+    {property:'Lotus Garfield',rate:197},{property:'Lotus 68th #116',rate:135},
+    {property:'Lotus 34th',rate:155},{property:'Lotus #116',rate:135},
+    {property:'Lotus #144',rate:135},{property:'Lotus 78th',rate:135},
+    {property:'Lotus Arcadia',rate:109},{property:'Lotus Fern',rate:155},
+    {property:'Lotus Glenrosa',rate:145},{property:'Lotus Heatherbrae',rate:233},
+    {property:'Lotus Thompson',rate:129},{property:'Lotus 68th #144',rate:135},
+    {property:'Marco Jeff Park',rate:105},{property:'Village Inn',rate:180},
+    {property:'Kinga Cactus',rate:225},{property:'Kinga 60th',rate:225},
+    {property:'Kinga Shea',rate:225},{property:'Kinga Sweet',rate:275},
+    {property:'Ethos/ Racine',rate:260},{property:'Angela Oak Park',rate:200},
+    {property:'Angela Home',rate:0},{property:'Daniel Throop',rate:0},
+  ];
+}
+
+// ==========================================
+// HELPERS
+// ==========================================
+function fmt(n) { return '$' + Number(n||0).toFixed(2); }
+function parseDate(s) { return s ? new Date(s + 'T00:00:00') : null; }
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+}
+function getUniqueEmployees() {
+  const s = new Set(db.employees.map(e => e.name));
+  return [...s].sort();
+}
+function getPropertiesForEmployee(name) {
+  return db.employees.filter(e => e.name === name).map(e => e.property).sort();
+}
+function getRate(name, property, type) {
+  const row = db.employees.find(e => e.name === name && e.property === property);
+  if (!row) return 0;
+  return type === 'inspect' ? (row.inspect || 0) : (row.clean || 0);
+}
+function getBillingRate(property) {
+  const row = db.billingRates.find(b => b.property.toLowerCase() === property.toLowerCase());
+  return row ? row.rate : 0;
+}
+function getPropertyGroup(property) {
+  const groups = ['Dream','Thomas','Dwellish','Lotus','Kinga','Marco','Village Inn','Ethos','Angela','Daniel'];
+  for (const g of groups) {
+    if (property.toLowerCase().startsWith(g.toLowerCase())) return g;
+  }
+  return 'Other';
+}
+function typeBadge(t) {
+  if (t === 'inspect') return '<span class="badge badge-inspect">Inspect</span>';
+  if (t === 'misc') return '<span class="badge badge-misc">Misc</span>';
+  return '<span class="badge badge-clean">Clean</span>';
+}
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const nb = document.getElementById('navbtn-' + id);
+  if (nb) nb.classList.add('active');
+  showReadonlyBanner(id);
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'form') initForm();
+  if (id === 'summary') { initSummaryFilters(); renderSummary(); }
+  if (id === 'payroll') initPayrollFilters();
+  if (id === 'billing') initBillingDates();
+  if (id === 'database') initDatabase();
+  if (id === 'messages') { loadChatFromSupabase(); markChatSeen(); startChatPolling(); }
+  else stopChatPolling();
+}
+
+// ==========================================
+// DASHBOARD
+// ==========================================
+function renderDashboard() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  const monthEntries = db.entries.filter(e => e.date >= monthStart);
+  const totalMonth = monthEntries.reduce((s,e) => s + e.rate + (e.additionalRate||0), 0);
+  const totalAll = db.entries.reduce((s,e) => s + e.rate + (e.additionalRate||0), 0);
+  const jobs = db.entries.length;
+  const cleaners = new Set(db.entries.map(e=>e.cleaner)).size;
+
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">This Month Payroll</div><div class="stat-value">${fmt(totalMonth)}</div><div class="stat-sub">${monthEntries.length} jobs logged</div></div>
+    <div class="stat-card"><div class="stat-label">Total Payroll (All Time)</div><div class="stat-value">${fmt(totalAll)}</div><div class="stat-sub">${jobs} total entries</div></div>
+    <div class="stat-card"><div class="stat-label">Active Cleaners</div><div class="stat-value">${getUniqueEmployees().length}</div><div class="stat-sub">${cleaners} have logged work</div></div>
+    <div class="stat-card"><div class="stat-label">Properties in DB</div><div class="stat-value">${db.billingRates.length}</div><div class="stat-sub">Billing database</div></div>
+  `;
+
+  // Recent entries
+  const recent = [...db.entries].sort((a,b) => b.date.localeCompare(a.date)).slice(0,8);
+  document.getElementById('recent-entries').innerHTML = recent.length
+    ? recent.map(e => `<tr><td class="muted">${fmtDate(e.date)}</td><td>${e.cleaner}</td><td>${e.property}</td><td>${typeBadge(e.type)}</td><td class="green">${fmt(e.rate + (e.additionalRate||0))}</td></tr>`).join('')
+    : `<tr><td colspan="5" class="empty"><div class="empty-icon">📋</div>No entries yet. <a href="#" onclick="showPage('form');return false;" style="color:var(--accent)">Log your first entry →</a></td></tr>`;
+
+  // Top earners this month
+  const earners = {};
+  monthEntries.forEach(e => {
+    if (!earners[e.cleaner]) earners[e.cleaner] = {jobs:0,total:0};
+    earners[e.cleaner].jobs++;
+    earners[e.cleaner].total += e.rate + (e.additionalRate||0);
+  });
+  const sorted = Object.entries(earners).sort((a,b) => b[1].total - a[1].total).slice(0,8);
+  document.getElementById('top-earners').innerHTML = sorted.length
+    ? sorted.map(([name,d]) => `<tr><td>${name}</td><td class="muted">${d.jobs}</td><td class="green">${fmt(d.total)}</td></tr>`).join('')
+    : `<tr><td colspan="3" class="empty">No entries this month yet.</td></tr>`;
+}
+
+// ==========================================
+// LOG WORK FORM
+// ==========================================
+function initForm() {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('entry-date').value = today;
+  const cleanerSel = document.getElementById('entry-cleaner');
+  cleanerSel.innerHTML = '<option value="">— Select Cleaner —</option>' +
+    getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
+  document.getElementById('entry-property').innerHTML = '<option value="">— Select Cleaner First —</option>';
+  document.getElementById('rate-display').textContent = '$0.00';
+  document.getElementById('rate-override').value = '';
+  document.getElementById('entry-notes').value = '';
+  applySearchableDropdowns();
+}
+
+function onCleanerChange() {
+  const name = document.getElementById('entry-cleaner').value;
+  const propSel = document.getElementById('entry-property');
+  if (!name) { propSel.innerHTML = '<option value="">— Select Cleaner First —</option>'; applySearchableDropdowns(); return; }
+  const props = getPropertiesForEmployee(name);
+  propSel.innerHTML = '<option value="">— Select Property —</option>' +
+    props.map(p => `<option value="${p}">${p}</option>`).join('');
+  updateRate();
+  applySearchableDropdowns();
+}
+
+function onPropertyChange() { updateRate(); }
+function onTypeChange() { updateRate(); }
+
+function updateRate() {
+  const name = document.getElementById('entry-cleaner').value;
+  const prop = document.getElementById('entry-property').value;
+  const type = document.getElementById('entry-type').value;
+  const rate = getRate(name, prop, type);
+  document.getElementById('rate-display').textContent = fmt(rate);
+}
+
+async function submitEntry() {
+  const date = document.getElementById('entry-date').value;
+  const cleaner = document.getElementById('entry-cleaner').value;
+  const property = document.getElementById('entry-property').value;
+  const type = document.getElementById('entry-type').value;
+  const additionalRateRaw = document.getElementById('rate-override').value;
+  const notes = document.getElementById('entry-notes').value;
+
+  if (!date || !cleaner || !property) {
+    showAlert('form-alert', 'error', '⚠ Please fill in Date, Cleaner, and Property.');
+    return;
+  }
+  const baseRate = getRate(cleaner, property, type);
+  const additionalRate = additionalRateRaw !== '' ? parseFloat(additionalRateRaw) : 0;
+  const entry = { id: Date.now(), date, cleaner, property, type, rate: baseRate, additionalRate, notes };
+
+  db.entries.push(entry);
+  await sbSaveEntry(entry);
+  const total = baseRate + additionalRate;
+  showAlert('form-alert', 'success', `✓ Entry logged: ${cleaner} — ${property} — ${fmt(total)}`);
+  document.getElementById('entry-property').value = '';
+  document.getElementById('rate-display').textContent = '$0.00';
+  document.getElementById('rate-override').value = '';
+  document.getElementById('entry-notes').value = '';
+}
+
+function clearForm() {
+  document.getElementById('entry-cleaner').value = '';
+  document.getElementById('entry-property').innerHTML = '<option value="">— Select Cleaner First —</option>';
+  document.getElementById('rate-display').textContent = '$0.00';
+  document.getElementById('rate-override').value = '';
+  document.getElementById('entry-notes').value = '';
+  document.getElementById('form-alert').innerHTML = '';
+}
+
+function showAlert(id, type, msg) {
+  document.getElementById(id).innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(() => { const el = document.getElementById(id); if(el) el.innerHTML=''; }, 4000);
+}
+
+// ==========================================
+// SORTED SUMMARY
+// ==========================================
+function initSummaryFilters() {
+  const sel = document.getElementById('summary-cleaner');
+  sel.innerHTML = '<option value="">All Cleaners</option>' +
+    getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
+  applySearchableDropdowns();
+}
+
+function getFilteredEntries() {
+  const from = document.getElementById('summary-from').value;
+  const to = document.getElementById('summary-to').value;
+  const cleaner = document.getElementById('summary-cleaner').value;
+  const prop = document.getElementById('summary-property').value.toLowerCase();
+  return db.entries.filter(e => {
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    if (cleaner && e.cleaner !== cleaner) return false;
+    if (prop && !e.property.toLowerCase().includes(prop)) return false;
+    return true;
+  }).sort((a,b) => b.date.localeCompare(a.date) || a.cleaner.localeCompare(b.cleaner));
+}
+
+function renderSummary() {
+  const entries = getFilteredEntries();
+  const canDel = canEdit('summary');
+  const tbody = document.getElementById('summary-body');
+  tbody.innerHTML = entries.length
+    ? entries.map(e => {
+        const addl = e.additionalRate || 0;
+        const deleteBtn = canDel
+          ? `<td class="no-print"><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button></td>`
+          : `<td class="no-print"></td>`;
+        return `
+        <tr>
+          <td>${fmtDate(e.date)}</td>
+          <td>${e.cleaner}</td>
+          <td>${e.property}</td>
+          <td>${typeBadge(e.type)}</td>
+          <td class="green">${fmt(e.rate)}</td>
+          <td class="mono" style="color:var(--accent2)">${addl > 0 ? fmt(addl) : '—'}</td>
+          <td class="muted">${e.notes||''}</td>
+          ${deleteBtn}
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="8" class="empty"><div class="empty-icon">📂</div>No records found.</td></tr>';
+
+  const total = entries.reduce((s,e) => s + e.rate + (e.additionalRate||0), 0);
+  document.getElementById('summary-totals').innerHTML =
+    `<td colspan="4" style="text-align:right;font-weight:700;color:var(--accent)">TOTAL (${entries.length} entries)</td><td colspan="2" style="color:var(--green);font-family:'DM Mono',monospace;font-weight:700">${fmt(total)}</td><td></td><td></td>`;
+}
+
+async function deleteEntry(id) {
+  if (!canEdit('summary')) { alert('You do not have permission to delete entries.'); return; }
+  if (!confirm('Delete this entry? This cannot be undone.')) return;
+  db.entries = db.entries.filter(e => e.id !== id);
+  await sbDeleteEntry(id);
+  renderSummary();
+}
+
+function clearSummaryFilters() {
+  document.getElementById('summary-from').value = '';
+  document.getElementById('summary-to').value = '';
+  document.getElementById('summary-cleaner').value = '';
+  document.getElementById('summary-property').value = '';
+  renderSummary();
+}
+
+function exportSummaryCSV() {
+  const entries = getFilteredEntries();
+  const rows = [['Date','Cleaner','Property','Type','Rate','Additional Rate','Notes']];
+  entries.forEach(e => rows.push([e.date, e.cleaner, e.property, e.type, e.rate, e.additionalRate||0, e.notes||'']));
+  downloadCSV(rows, 'DRS_Summary_Export.csv');
+}
+
+// ==========================================
+// EMPLOYEE PAYROLL REPORT
+// ==========================================
+function initPayrollFilters() {
+  const sel = document.getElementById('payroll-cleaner');
+  sel.innerHTML = '<option value="">— Select Cleaner —</option>' +
+    getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
+  applySearchableDropdowns();
+}
+
+function renderStaffPanel(from, to) {
+  const panel = document.getElementById('payroll-staff-panel');
+  if (!panel) return;
+
+  // Gather all entries in the date range across all cleaners
+  const entries = db.entries.filter(e => {
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    return true;
+  });
+
+  if (entries.length === 0) { panel.innerHTML = ''; return; }
+
+  // Aggregate per cleaner
+  const staff = {};
+  entries.forEach(e => {
+    if (!staff[e.cleaner]) staff[e.cleaner] = {cleans: 0, inspects: 0, misc: 0};
+    if (e.type === 'inspect') staff[e.cleaner].inspects++;
+    else if (e.type === 'misc') staff[e.cleaner].misc++;
+    else staff[e.cleaner].cleans++;
+  });
+
+  const sorted = Object.entries(staff).sort((a,b) => a[0].localeCompare(b[0]));
+
+  const rows = sorted.map(([name, counts]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;color:var(--text);">${name}</span>
+      <span style="display:flex;gap:8px;font-family:'DM Mono',monospace;font-size:12px;">
+        ${counts.cleans > 0 ? `<span style="color:var(--green);" title="Cleans">🧹 ${counts.cleans}</span>` : ''}
+        ${counts.inspects > 0 ? `<span style="color:var(--accent);" title="Inspects">🔍 ${counts.inspects}</span>` : ''}
+        ${counts.misc > 0 ? `<span style="color:var(--text-muted);" title="Misc">+ ${counts.misc}</span>` : ''}
+      </span>
+    </div>`).join('');
+
+  panel.innerHTML = `
+    <div class="card" style="position:sticky;top:20px;width:100%;box-sizing:border-box;">
+      <div class="card-title" style="margin-bottom:4px;">👥 Active Staff</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+        Cleaners who worked during this period
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:12px;font-size:12px;">
+        <span style="color:var(--text-muted);">${sorted.length} cleaner${sorted.length !== 1 ? 's' : ''}</span>
+        <span style="color:var(--green);">🧹 ${entries.filter(e=>e.type!=='inspect'&&e.type!=='misc').length} cleans</span>
+        <span style="color:var(--accent);">🔍 ${entries.filter(e=>e.type==='inspect').length} inspects</span>
+      </div>
+      <div>${rows}</div>
+    </div>`;
+}
+
+function renderPayroll() {
+  const name = document.getElementById('payroll-cleaner').value;
+  const from = document.getElementById('payroll-from').value;
+  const to = document.getElementById('payroll-to').value;
+  const container = document.getElementById('payroll-report');
+  renderStaffPanel(from, to);
+  if (!name) { container.innerHTML = ''; return; }
+
+  const entries = db.entries.filter(e => {
+    if (e.cleaner !== name) return false;
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    return true;
+  }).sort((a,b) => a.date.localeCompare(b.date));
+
+  const total = entries.reduce((s,e) => s + (e.rateOverride ?? e.rate) + (e.additionalRate||0), 0);
+  const range = (from || to) ? `${from ? fmtDate(from) : 'Start'} – ${to ? fmtDate(to) : 'Today'}` : 'All Time';
+  const editable = canEdit('payroll');
+
+  const rowsHtml = entries.length
+    ? entries.map(e => {
+        const addl = e.additionalRate || 0;
+        const isOverridden = e.rateOverride !== undefined && e.rateOverride !== null;
+        const displayRate = isOverridden ? e.rateOverride : e.rate;
+        const isManual = e.isManual;
+        if (editable) {
+          const rateField = (isManual && !isAdmin())
+            ? `<span class="payroll-inline-input" style="display:inline-block;padding:4px 6px;color:var(--text-muted);font-style:italic;">${fmt(displayRate)}</span>`
+            : `<input type="number" class="payroll-inline-input${isOverridden ? ' overridden' : ''}"
+                data-id="${e.id}" data-base="${e.rate}"
+                value="${displayRate}" step="0.01"
+                title="${isManual ? 'Manual pay entry' : 'Base rate from DB: ' + fmt(e.rate)}"
+                onchange="handlePayrollRateOverride(${e.id}, this, ${isManual})">
+              ${isOverridden && !isManual ? `<span class="override-hint">✎ overridden (base: ${fmt(e.rate)})</span>` : ''}`;
+          const canDelete = isAdmin() || (isManual && e.addedBy === currentUser);
+          return `<tr${isManual ? ' class="manual-row"' : ''}>
+            <td>${isManual ? `<span style="font-size:11px;color:var(--text-muted);">${fmtDate(e.date)}<br><span style="color:var(--accent);font-size:10px;">+ manual</span></span>` : fmtDate(e.date)}</td>
+            <td>${isManual ? `<span style="color:var(--text-muted);font-style:italic;">${e.property||'—'}</span>` : e.property}</td>
+            <td>${isManual ? `<span class="badge badge-misc">Manual</span>` : typeBadge(e.type)}</td>
+            <td>${rateField}</td>
+            <td>
+              <input type="number" class="payroll-inline-input"
+                value="${addl || ''}" step="0.01" placeholder="0.00"
+                onchange="handlePayrollAdditionalRate(${e.id}, this)">
+            </td>
+            <td class="green" id="payrow-total-${e.id}">${fmt(displayRate + addl)}</td>
+            <td>
+              <textarea class="payroll-notes-input" onchange="handlePayrollNotes(${e.id}, this)">${e.notes||''}</textarea>
+            </td>
+            <td class="no-print">${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deletePayrollEntry(${e.id})" title="Delete row">✕</button>` : ''}</td>
+          </tr>`;
+        } else {
+          return `<tr${isManual ? ' class="manual-row"' : ''}>
+            <td>${fmtDate(e.date)}${isManual ? '<br><span style="color:var(--accent);font-size:10px;">+ manual</span>' : ''}</td>
+            <td>${e.property||'—'}</td>
+            <td>${isManual ? '<span class="badge badge-misc">Manual</span>' : typeBadge(e.type)}</td>
+            <td class="green">${fmt(displayRate)}</td>
+            <td class="mono" style="color:var(--accent2)">${addl > 0 ? fmt(addl) : '—'}</td>
+            <td class="green">${fmt(displayRate + addl)}</td>
+            <td class="muted">${e.notes||''}</td>
+            <td></td>
+          </tr>`;
+        }
+      }).join('')
+    : `<tr><td colspan="8" class="empty">No entries for this period.</td></tr>`;
+
+  const editHint = editable ? `
+    <div style="background:rgba(144,224,239,0.06);border:1px solid rgba(144,224,239,0.15);border-radius:var(--radius);padding:10px 16px;margin-bottom:16px;font-size:12px;color:var(--accent);">
+      ✎ <strong>Inline editing is on.</strong> Click Rate to override (you'll be asked to confirm). Use <strong>+</strong> to add a manual pay row. All changes sync to Summary automatically.
+    </div>` : '';
+
+  const addRowBtn = editable ? `
+    <button class="btn-add-row no-print" onclick="addManualPayRow()">
+      <span style="font-size:16px;line-height:1;">+</span> Add Pay Row
+    </button>` : '';
+
+  container.innerHTML = `
+    <div class="invoice-box" id="payroll-print-area" style="max-width:960px;">
+      <div class="invoice-header">
+        <div>
+          <div class="invoice-title">Pay Statement</div>
+          <div style="color:var(--text-muted);margin-top:6px;font-size:14px;">Dream Rental Solutions</div>
+        </div>
+        <div class="invoice-meta">
+          <strong>${name}</strong>
+          Period: ${range}<br>
+          Generated: ${new Date().toLocaleDateString()}<br>
+          Entries: ${entries.length}
+        </div>
+      </div>
+      ${editHint}
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Date</th><th>Property</th><th>Type</th><th>Rate</th>
+            <th>Additional Rate</th><th>Total</th><th>Notes</th><th class="no-print"></th>
+          </tr></thead>
+          <tbody id="payroll-tbody">${rowsHtml}</tbody>
+          <tfoot>
+            <tr class="totals-row">
+              <td colspan="5" style="text-align:right">TOTAL EARNINGS</td>
+              <td id="payroll-grand-total" style="color:var(--green);font-family:'DM Mono',monospace">${fmt(total)}</td>
+              <td></td><td class="no-print"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      ${addRowBtn}
+    </div>`;
+}
+
+function addManualPayRow() {
+  const name = document.getElementById('payroll-cleaner').value;
+  const from = document.getElementById('payroll-from').value;
+  const to   = document.getElementById('payroll-to').value;
+  if (!name) return;
+
+  // Use today's date, clamped to the selected range if set
+  let date = new Date().toISOString().slice(0, 10);
+  if (to && date > to) date = to;
+  if (from && date < from) date = from;
+
+  const id = Date.now();
+  const entry = {
+    id,
+    date,
+    cleaner: name,
+    property: 'Additional Pay',
+    type: 'misc',
+    rate: 0,
+    additionalRate: 0,
+    notes: '',
+    isManual: true,
+    addedBy: currentUser
+  };
+  db.entries.push(entry);
+  sbSaveEntry(entry); // async, fire and forget for responsiveness
+
+  // Append the new row to the table without full re-render
+  const tbody = document.getElementById('payroll-tbody');
+  if (!tbody) { renderPayroll(); return; }
+
+  const rateCell = isAdmin()
+    ? `<input type="number" class="payroll-inline-input" value="0" step="0.01" placeholder="0.00"
+        onchange="handlePayrollRateOverride(${id}, this, true)">`
+    : `<span class="payroll-inline-input" style="display:inline-block;padding:4px 6px;color:var(--text-muted);font-style:italic;">$0.00</span>`;
+
+  const canDelete = isAdmin() || entry.addedBy === currentUser;
+
+  const tr = document.createElement('tr');
+  tr.className = 'manual-row';
+  tr.id = 'manrow-' + id;
+  tr.innerHTML = `
+    <td><span style="font-size:11px;color:var(--text-muted);">${fmtDate(date)}<br><span style="color:var(--accent);font-size:10px;">+ manual</span></span></td>
+    <td><span style="color:var(--text-muted);font-style:italic;">Additional Pay</span></td>
+    <td><span class="badge badge-misc">Manual</span></td>
+    <td>${rateCell}</td>
+    <td>
+      <input type="number" class="payroll-inline-input" value="" step="0.01" placeholder="0.00"
+        onchange="handlePayrollAdditionalRate(${id}, this)">
+    </td>
+    <td class="green" id="payrow-total-${id}">$0.00</td>
+    <td>
+      <textarea class="payroll-notes-input" onchange="handlePayrollNotes(${id}, this)" placeholder="Reason for pay..."></textarea>
+    </td>
+    <td class="no-print">${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deletePayrollEntry(${id})" title="Delete row">✕</button>` : ''}</td>
+  `;
+  tbody.appendChild(tr);
+  // Focus additional rate field for Greg, rate field for admin
+  const focusInput = isAdmin() ? tr.querySelector('input[type="number"]') : tr.querySelectorAll('input[type="number"]')[0];
+  if (focusInput) focusInput.focus();
+}
+
+async function deletePayrollEntry(id) {
+  if (!confirm('Remove this pay row?')) return;
+  db.entries = db.entries.filter(e => e.id !== id);
+  await sbDeleteEntry(id);
+  refreshPayrollGrandTotal();
+  const row = document.getElementById('manrow-' + id);
+  if (row) { row.remove(); return; }
+  renderPayroll();
+}
+
+function handlePayrollRateOverride(id, input, isManual) {
+  const entry = db.entries.find(e => e.id === id);
+  if (!entry) return;
+  const newVal = parseFloat(input.value);
+  if (isNaN(newVal)) { input.value = entry.rateOverride ?? entry.rate; return; }
+  if (!isManual) {
+    const confirmed = confirm(
+      `Change rate?\n\n"${entry.property}" on ${fmtDate(entry.date)}\nFrom: ${fmt(entry.rateOverride ?? entry.rate)}  →  To: ${fmt(newVal)}`
+    );
+    if (!confirmed) {
+      input.value = entry.rateOverride ?? entry.rate;
+      return;
+    }
+    input.classList.add('overridden');
+  }
+  entry.rateOverride = newVal;
+  sbSaveEntry(entry);
+  refreshPayrollRowTotal(id);
+}
+
+function handlePayrollAdditionalRate(id, input) {
+  const entry = db.entries.find(e => e.id === id);
+  if (!entry) return;
+  entry.additionalRate = parseFloat(input.value) || 0;
+  sbSaveEntry(entry);
+  refreshPayrollRowTotal(id);
+}
+
+function handlePayrollNotes(id, textarea) {
+  const entry = db.entries.find(e => e.id === id);
+  if (!entry) return;
+  entry.notes = textarea.value;
+  sbSaveEntry(entry);
+}
+
+function refreshPayrollRowTotal(id) {
+  const entry = db.entries.find(e => e.id === id);
+  if (!entry) return;
+  const rate = entry.rateOverride ?? entry.rate;
+  const addl = entry.additionalRate || 0;
+  const rowEl = document.getElementById('payrow-total-' + id);
+  if (rowEl) rowEl.textContent = fmt(rate + addl);
+  refreshPayrollGrandTotal();
+}
+
+function refreshPayrollGrandTotal() {
+  const name = document.getElementById('payroll-cleaner').value;
+  const from = document.getElementById('payroll-from').value;
+  const to   = document.getElementById('payroll-to').value;
+  const all  = db.entries.filter(e => {
+    if (e.cleaner !== name) return false;
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    return true;
+  });
+  const grand = all.reduce((s,e) => s + (e.rateOverride ?? e.rate) + (e.additionalRate||0), 0);
+  const gtEl = document.getElementById('payroll-grand-total');
+  if (gtEl) gtEl.textContent = fmt(grand);
+}
+
+function printPayroll() {
+  window.print();
+}
+
+function exportPayrollCSV() {
+  const name = document.getElementById('payroll-cleaner').value;
+  const from = document.getElementById('payroll-from').value;
+  const to = document.getElementById('payroll-to').value;
+  if (!name) return;
+  const entries = db.entries.filter(e => {
+    if (e.cleaner !== name) return false;
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    return true;
+  }).sort((a,b) => a.date.localeCompare(b.date));
+  const rows = [['Employee','Date','Property','Type','Base Rate','Effective Rate','Additional Rate','Total','Notes']];
+  entries.forEach(e => {
+    const eff = e.rateOverride ?? e.rate;
+    const addl = e.additionalRate || 0;
+    rows.push([e.cleaner, e.date, e.property, e.type, e.rate, eff, addl, eff+addl, e.notes||'']);
+  });
+  downloadCSV(rows, `Payroll_${name.replace(/\s/g,'_')}.csv`);
+}
+
+// ==========================================
+// BILLING
+// ==========================================
+function initBillingDates() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  const today = now.toISOString().slice(0,10);
+  if (!document.getElementById('billing-from').value) document.getElementById('billing-from').value = monthStart;
+  if (!document.getElementById('billing-to').value) document.getElementById('billing-to').value = today;
+}
+
+function renderBilling() {
+  const from = document.getElementById('billing-from').value;
+  const to = document.getElementById('billing-to').value;
+  const groupFilter = document.getElementById('billing-group').value;
+
+  const entries = db.entries.filter(e => {
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    return true;
+  });
+
+  // Group by property+date — track cleans and inspects separately
+  const propMap = {};
+  entries.forEach(e => {
+    const group = getPropertyGroup(e.property);
+    if (groupFilter && group !== groupFilter) return;
+    const key = e.property + '|' + e.date;
+    if (!propMap[key]) propMap[key] = {group, prop: e.property, date: e.date, cleans:0, inspects:0, billingRate: getBillingRate(e.property)};
+    if (e.type === 'inspect') propMap[key].inspects++;
+    else propMap[key].cleans++;
+  });
+
+  // Group by brand
+  const groups = {};
+  Object.values(propMap).forEach(data => {
+    if (!groups[data.group]) groups[data.group] = [];
+    groups[data.group].push(data);
+  });
+
+  const container = document.getElementById('billing-report');
+  if (Object.keys(groups).length === 0) {
+    container.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">🧾</div>No billing data for this period.</div></div>`;
+    return;
+  }
+
+  if (!db.billingMisc) db.billingMisc = {};
+
+  let html = '';
+  let grandBillTotal = 0;
+  let grandMiscTotal = 0;
+
+  Object.entries(groups).sort().forEach(([group, props]) => {
+    const groupKey = group.replace(/[^a-zA-Z0-9]/g, '_');
+    const groupBillTotal = props.reduce((s,p) => s + p.billingRate * p.cleans, 0);
+    // One misc bucket per group
+    const miscKey = '__group__' + group;
+    const miscRows = db.billingMisc[miscKey] || [];
+    const groupMiscTotal = miscRows.reduce((s,m) => s + (parseFloat(m.amount)||0), 0);
+    const groupCombined = groupBillTotal + groupMiscTotal;
+    grandBillTotal += groupBillTotal;
+    grandMiscTotal += groupMiscTotal;
+
+    const propRows = props
+      .sort((a,b) => a.date.localeCompare(b.date) || a.prop.localeCompare(b.prop))
+      .map(p => {
+        const billed = p.billingRate * p.cleans;
+        return `<tr>
+          <td class="mono" style="font-size:12px;">${fmtDate(p.date)}</td>
+          <td>${p.prop}</td>
+          <td class="muted">${p.cleans || '—'}</td>
+          <td class="muted">${p.inspects || '—'}</td>
+          <td class="mono">${fmt(p.billingRate)}${p.billingRate===0?'<span style="color:var(--text-dim);font-size:10px;"> (no rate)</span>':''}</td>
+          <td class="green">${fmt(billed)}</td>
+        </tr>`;
+      }).join('');
+
+    const miscRowsHtml = miscRows.map((m,i) => `
+      <div class="misc-row">
+        <input type="date" value="${m.date||''}" onchange="updateGroupMisc('${group}',${i},'date',this.value)">
+        <input type="text" value="${m.notes||''}" onchange="updateGroupMisc('${group}',${i},'notes',this.value)" placeholder="Notes…">
+        <input type="number" value="${m.amount||''}" step="0.01" onchange="updateGroupMisc('${group}',${i},'amount',this.value)" placeholder="0.00">
+        <button class="btn btn-danger btn-sm" onclick="deleteGroupMisc('${group}',${i})" style="padding:5px 8px;font-size:11px;">✕</button>
+      </div>`).join('');
+
+    html += `
+      <div style="margin-bottom:24px;">
+        <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent);margin-bottom:10px;">🏢 ${group} Properties</div>
+        <div class="billing-group-wrap">
+          <div class="card" style="margin-bottom:0;">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Date</th><th>Property</th><th>Cleans</th><th>Inspects</th><th>Billing Rate</th><th>Billed</th></tr></thead>
+                <tbody>${propRows}</tbody>
+                <tfoot>
+                  <tr class="totals-row">
+                    <td colspan="5" style="text-align:right">Group Billing Total</td>
+                    <td style="color:var(--green);font-family:'DM Mono',monospace">${fmt(groupBillTotal)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+          <div class="billing-misc-panel">
+            <div class="billing-misc-title">
+              <span>📎 ${group} Miscellaneous</span>
+              <button class="btn-add-row" onclick="addGroupMisc('${group}')" style="margin:0;padding:4px 12px;font-size:11px;">+ Add</button>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;display:grid;grid-template-columns:108px 1fr 80px 32px;gap:6px;padding:0 2px;">
+              <span>DATE</span><span>NOTES</span><span>AMOUNT</span><span></span>
+            </div>
+            <div id="misc-rows-${groupKey}">${miscRowsHtml || '<div style="color:var(--text-dim);font-size:12px;padding:4px 0;">No misc items yet — click + Add</div>'}</div>
+            <div class="misc-subtotal">
+              <span>Misc Subtotal</span>
+              <strong id="misc-sub-${groupKey}">${fmt(groupMiscTotal)}</strong>
+            </div>
+            <div class="billing-combined-total">
+              <span>Billing + Misc</span>
+              <strong id="misc-combined-${groupKey}">${fmt(groupCombined)}</strong>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  const grandCombined = grandBillTotal + grandMiscTotal;
+  html += `<div class="card" style="background:rgba(144,224,239,0.04);border-color:var(--accent);">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+      <div class="card-title" style="margin:0">Grand Total — All Groups</div>
+      <div style="display:flex;gap:32px;align-items:center;">
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;">Billing</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;color:var(--text-muted)">${fmt(grandBillTotal)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;">Misc</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;color:var(--accent2)" id="grand-misc-total">${fmt(grandMiscTotal)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;">Combined</div>
+          <div style="font-family:'DM Mono',monospace;font-size:28px;color:var(--green)" id="grand-combined-total">${fmt(grandCombined)}</div>
+        </div>
+      </div>
+    </div>
+    <div style="color:var(--text-muted);font-size:13px;margin-top:8px;">Period: ${from ? fmtDate(from):''} – ${to ? fmtDate(to):''}</div>
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+async function addGroupMisc(group) {
+  if (!db.billingMisc) db.billingMisc = {};
+  const key = '__group__' + group;
+  if (!db.billingMisc[key]) db.billingMisc[key] = [];
+  db.billingMisc[key].push({ date: new Date().toISOString().slice(0,10), notes: '', amount: 0 });
+  await sbSaveBillingMisc(key, db.billingMisc[key]);
+  renderBilling();
+}
+
+async function updateGroupMisc(group, idx, field, value) {
+  if (!db.billingMisc) db.billingMisc = {};
+  const key = '__group__' + group;
+  if (!db.billingMisc[key] || !db.billingMisc[key][idx]) return;
+  db.billingMisc[key][idx][field] = field === 'amount' ? (parseFloat(value)||0) : value;
+  sbSaveBillingMisc(key, db.billingMisc[key]); // async fire-and-forget
+  // Live-update totals without full re-render
+  const groupKey = group.replace(/[^a-zA-Z0-9]/g, '_');
+  const miscRows = db.billingMisc[key];
+  const miscTotal = miscRows.reduce((s,m) => s + (parseFloat(m.amount)||0), 0);
+  const subEl = document.getElementById('misc-sub-' + groupKey);
+  const combEl = document.getElementById('misc-combined-' + groupKey);
+  if (subEl) subEl.textContent = fmt(miscTotal);
+  if (combEl) {
+    const from = document.getElementById('billing-from').value;
+    const to   = document.getElementById('billing-to').value;
+    const groupBillTotal = db.entries.filter(e => {
+      if (from && e.date < from) return false;
+      if (to && e.date > to) return false;
+      return getPropertyGroup(e.property) === group;
+    }).reduce((s,e) => s + getBillingRate(e.property), 0);
+    combEl.textContent = fmt(groupBillTotal + miscTotal);
+  }
+  let grandMisc = 0;
+  Object.keys(db.billingMisc).filter(k => k.startsWith('__group__')).forEach(k => {
+    grandMisc += (db.billingMisc[k]||[]).reduce((s,m) => s + (parseFloat(m.amount)||0), 0);
+  });
+  const gm = document.getElementById('grand-misc-total');
+  if (gm) gm.textContent = fmt(grandMisc);
+}
+
+async function deleteGroupMisc(group, idx) {
+  const key = '__group__' + group;
+  if (!db.billingMisc || !db.billingMisc[key]) return;
+  db.billingMisc[key].splice(idx, 1);
+  await sbSaveBillingMisc(key, db.billingMisc[key]);
+  renderBilling();
+}
+
+function exportBillingCSV() {
+  const from = document.getElementById('billing-from').value;
+  const to = document.getElementById('billing-to').value;
+  const groupFilter = document.getElementById('billing-group').value;
+  const entries = db.entries.filter(e => {
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    return true;
+  });
+  const propMap = {};
+  entries.forEach(e => {
+    const group = getPropertyGroup(e.property);
+    if (groupFilter && group !== groupFilter) return;
+    if (!propMap[e.property]) propMap[e.property] = {group, jobs:0, billingRate:getBillingRate(e.property)};
+    propMap[e.property].jobs++;
+  });
+  const rows = [['Group','Property','Jobs','Billing Rate','Billed Total']];
+  Object.entries(propMap).sort().forEach(([prop,d]) => {
+    rows.push([d.group, prop, d.jobs, d.billingRate, (d.billingRate * d.jobs).toFixed(2)]);
+  });
+  // Append group misc sections
+  if (db.billingMisc) {
+    const groupMiscEntries = Object.entries(db.billingMisc).filter(([k]) => k.startsWith('__group__'));
+    if (groupMiscEntries.length > 0) {
+      rows.push([]);
+      rows.push(['--- MISCELLANEOUS ---','','','','']);
+      rows.push(['Group','Date','Notes','Amount','']);
+      groupMiscEntries.forEach(([key, miscRows]) => {
+        const group = key.replace('__group__','');
+        miscRows.forEach(m => rows.push([group, m.date, m.notes, m.amount, '']));
+      });
+    }
+  }
+  downloadCSV(rows, 'DRS_Billing_Export.csv');
+}
+
+// ==========================================
+// DATABASE EDITOR
+// ==========================================
+function showDbTab(id) {
+  document.querySelectorAll('.db-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).style.display = '';
+  event.target.classList.add('active');
+  if (id === 'db-employees') renderDbEmployees();
+  if (id === 'db-billing') renderDbBilling();
+  if (id === 'db-new-entry') {
+    const sel = document.getElementById('new-emp-name');
+    sel.innerHTML = '<option value="">— Select Cleaner —</option>' +
+      getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
+    applySearchableDropdowns();
+  }
+}
+
+function initDatabase() {
+  const empFilter = document.getElementById('db-emp-filter');
+  empFilter.innerHTML = '<option value="">All Employees</option>' +
+    getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
+  // Hide "Add New" tab for non-admins
+  const addTab = document.querySelector('.sub-tab[onclick="showDbTab(\'db-new-entry\')"]');
+  if (addTab) addTab.style.display = isAdmin() ? '' : 'none';
+  renderDbEmployees();
+  applySearchableDropdowns();
+}
+
+function renderDbEmployees() {
+  const empFilter = document.getElementById('db-emp-filter').value;
+  const propFilter = document.getElementById('db-prop-filter').value.toLowerCase();
+  const rows = db.employees.filter(e => {
+    if (empFilter && e.name !== empFilter) return false;
+    if (propFilter && !e.property.toLowerCase().includes(propFilter)) return false;
+    return true;
+  });
+  const editable = isAdmin();
+  document.getElementById('db-emp-body').innerHTML = rows.map((e,i) => {
+    const idx = db.employees.indexOf(e);
+    if (editable) {
+      return `<tr>
+        <td>${e.name}</td>
+        <td>${e.property}</td>
+        <td><input type="number" value="${e.clean}" step="0.01" style="width:90px;" onchange="updateEmpRate(${idx},'clean',this.value)"></td>
+        <td><input type="number" value="${e.inspect}" step="0.01" style="width:90px;" onchange="updateEmpRate(${idx},'inspect',this.value)"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteEmpRate(${idx})">✕</button></td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td>${e.name}</td><td>${e.property}</td>
+        <td class="mono">${fmt(e.clean)}</td><td class="mono">${fmt(e.inspect)}</td>
+        <td class="muted">—</td>
+      </tr>`;
+    }
+  }).join('') || '<tr><td colspan="5" class="empty">No records found.</td></tr>';
+}
+
+function updateEmpRate(idx, field, val) {
+  db.employees[idx][field] = parseFloat(val) || 0;
+  sbSaveEmployeeRate(db.employees[idx]);
+}
+
+async function deleteEmpRate(idx) {
+  if (!confirm('Remove this rate entry?')) return;
+  const emp = db.employees[idx];
+  db.employees.splice(idx, 1);
+  await sbDeleteEmployeeRate(emp.name, emp.property);
+  renderDbEmployees();
+}
+
+function renderDbBilling() {
+  const filter = document.getElementById('db-billing-filter').value.toLowerCase();
+  const rows = db.billingRates.filter(b => !filter || b.property.toLowerCase().includes(filter));
+  const editable = isAdmin();
+  document.getElementById('db-billing-body').innerHTML = rows.map((b,i) => {
+    const idx = db.billingRates.indexOf(b);
+    if (editable) {
+      return `<tr>
+        <td>${b.property}</td>
+        <td class="muted">${getPropertyGroup(b.property)}</td>
+        <td><input type="number" value="${b.rate}" step="0.01" style="width:100px;" onchange="updateBillingRate(${idx},this.value)"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteBillingRate(${idx})">✕</button></td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td>${b.property}</td><td class="muted">${getPropertyGroup(b.property)}</td>
+        <td class="mono">${fmt(b.rate)}</td><td class="muted">—</td>
+      </tr>`;
+    }
+  }).join('') || '<tr><td colspan="4" class="empty">No records found.</td></tr>';
+}
+
+function updateBillingRate(idx, val) {
+  db.billingRates[idx].rate = parseFloat(val) || 0;
+  sbSaveBillingRate(db.billingRates[idx].property, db.billingRates[idx].rate);
+}
+
+async function deleteBillingRate(idx) {
+  if (!confirm('Remove this billing rate?')) return;
+  const prop = db.billingRates[idx].property;
+  db.billingRates.splice(idx, 1);
+  await sbDeleteBillingRate(prop);
+  renderDbBilling();
+}
+
+async function addEmployeeRate() {
+  const name = document.getElementById('new-emp-name').value;
+  const prop = document.getElementById('new-emp-prop').value.trim();
+  const clean = parseFloat(document.getElementById('new-emp-clean').value) || 0;
+  const inspect = parseFloat(document.getElementById('new-emp-inspect').value) || 0;
+  if (!name || !prop) { alert('Please select an employee and enter a property name.'); return; }
+  const emp = {name, property:prop, clean, inspect};
+  db.employees.push(emp);
+  await sbSaveEmployeeRate(emp);
+  document.getElementById('new-emp-prop').value = '';
+  document.getElementById('new-emp-clean').value = '';
+  document.getElementById('new-emp-inspect').value = '';
+  alert(`Rate added: ${name} — ${prop}`);
+}
+
+async function addNewEmployee() {
+  const name = document.getElementById('new-emp-fullname').value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+  if (getUniqueEmployees().includes(name)) { alert('Employee already exists.'); return; }
+  const emp = {name, property:'Misc', clean:0, inspect:0};
+  db.employees.push(emp);
+  await sbSaveEmployeeRate(emp);
+  document.getElementById('new-emp-fullname').value = '';
+  alert(`Employee "${name}" added!`);
+  initDatabase();
+}
+
+async function addBillingProperty() {
+  const prop = document.getElementById('new-billing-prop').value.trim();
+  const rate = parseFloat(document.getElementById('new-billing-rate').value) || 0;
+  if (!prop) { alert('Please enter a property name.'); return; }
+  db.billingRates.push({property:prop, rate});
+  await sbSaveBillingRate(prop, rate);
+  document.getElementById('new-billing-prop').value = '';
+  document.getElementById('new-billing-rate').value = '';
+  alert(`Billing property "${prop}" added!`);
+}
+
+// ==========================================
+// CSV EXPORT
+// ==========================================
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ==========================================
+// INIT
+// ==========================================
+
+async function seedAllEntries() {
+  // Build a set of existing entry fingerprints so we never double-add
+  const existing = new Set(db.entries.map(e => `${e.date}|${e.cleaner}|${e.property}|${e.rate}|${e.notes}`));
+
+  const raw = [
+    // [date, cleaner, property, rate, additionalRate, notes, type]
+
+    // ── JOCY ──
+    ['2026-05-30','Jocy','Augusta 1E',             20,  0, 'w/ Sabrina',  'inspect'],
+    ['2026-05-30','Jocy','Dream Claremont 1',       20,  0, '',            'inspect'],
+    ['2026-05-30','Jocy','Dream Straits 1309',      20,  0, '',            'inspect'],
+    ['2026-05-30','Jocy','Dream Winthrop 411',      20,  0, '',            'inspect'],
+    ['2026-05-30','Jocy','Dwellish Drexel',         30,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Angela Home',             15,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Augusta 1W',              20,  0, 'w/ Sabrina',  'inspect'],
+    ['2026-05-31','Jocy','Dream Claremont Ground',  20,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Dream Grand 203',         20,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Dream Grand 204',         20,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Dream Grand 403',         20,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Dream Winthrop 412',      20,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Dream Winthrop 507',      20,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Dwellish Southport',      25,  0, '',            'inspect'],
+    ['2026-05-31','Jocy','Thomas George',           20,  0, '',            'inspect'],
+    ['2026-06-01','Jocy','Augusta 1E',              20,  0, '',            'inspect'],
+    ['2026-06-01','Jocy','Dream Michigan',          20,  0, '',            'inspect'],
+    ['2026-06-01','Jocy','Dream Straits 1309',      20,  0, '',            'inspect'],
+    ['2026-06-01','Jocy','Dream Straits 1509',      20,  0, '',            'inspect'],
+    ['2026-06-01','Jocy','Dream Winthrop 311',      20,  0, '',            'inspect'],
+    ['2026-06-02','Jocy','Dream Claremont 2',       20,  0, '',            'inspect'],
+    ['2026-06-02','Jocy','Dream Grand 204',         20,  0, '',            'inspect'],
+    ['2026-06-02','Jocy','Dream Winthrop 411',      20,  0, '',            'inspect'],
+    ['2026-06-02','Jocy','Thomas George',           20,  0, '',            'inspect'],
+    ['2026-06-03','Jocy','Dream Straits 1409',     120,  0, '',            'clean'],
+    ['2026-06-03','Jocy','Dream Winthrop 312',      20,  0, '',            'inspect'],
+    ['2026-06-03','Jocy','Thomas Forest Park',      10,  0, '',            'inspect'],
+    ['2026-06-04','Jocy','Augusta 1E',              20,  0, 'w/ camilla',  'inspect'],
+    ['2026-06-04','Jocy','Dream Claremont 1',       20,  0, '',            'inspect'],
+    ['2026-06-04','Jocy','Dream Grand 403',         20,  0, '',            'inspect'],
+    ['2026-06-04','Jocy','Dream Michigan',          20,  0, '',            'inspect'],
+    ['2026-06-04','Jocy','Dream Winthrop 412',      20,  0, '',            'inspect'],
+    ['2026-06-04','Jocy','Dream Winthrop 506',      20,  0, '',            'inspect'],
+    ['2026-06-04','Jocy','Dream Winthrop 507',      20,  0, '',            'inspect'],
+    ['2026-06-04','Jocy','Jorge Old Chicago',       20,  0, 'w/ Jorge',    'inspect'],
+    ['2026-06-04','Jocy','Noble George 2',          20,  0, '',            'inspect'],
+    ['2026-06-05','Jocy','Dream Claremont 2',       20,  0, '',            'inspect'],
+    ['2026-06-05','Jocy','Dream Claremont Ground',  20,  0, '',            'inspect'],
+    ['2026-06-05','Jocy','Dream Grand 203',         20,  0, '',            'inspect'],
+    ['2026-06-05','Jocy','Dream Straits 1309',     120,  0, '',            'clean'],
+    ['2026-06-05','Jocy','Dream Straits 1509',     120,  0, '',            'clean'],
+    ['2026-06-05','Jocy','Dream Winthrop 312',      20,  0, '',            'inspect'],
+
+    // ── CLAUDIA ──
+    ['2026-05-30','Claudia','Dream Ohio',           90,  0, 'u2',          'clean'],
+    ['2026-05-30','Claudia','Dwellish Warner',      95,  0, '',            'clean'],
+    ['2026-05-30','Claudia','Village Inn',         130,  0, '',            'clean'],
+    ['2026-05-31','Claudia','Dream 17th Pilsen',   110,  0, '',            'clean'],
+    ['2026-05-31','Claudia','Dream Beach',         200,  0, '',            'clean'],
+    ['2026-05-31','Claudia','Dwellish Hermitage',   80,  0, '',            'clean'],
+    ['2026-06-01','Claudia','Dream Huron',         120,  0, '',            'clean'],
+    ['2026-06-01','Claudia','Dream Ohio',           90,  0, 'u1',          'clean'],
+    ['2026-06-01','Claudia','Dwellish Ohio',       140,  0, '',            'clean'],
+    ['2026-06-02','Claudia','Dream Beach',         200,  0, '',            'clean'],
+    ['2026-06-02','Claudia','Dream Willard',       120,  0, '',            'clean'],
+    ['2026-06-03','Claudia','Dream 18th Pilsen',    85,  0, '1a',          'clean'],
+    ['2026-06-03','Claudia','Dream 18th Pilsen',    85,  0, '1b',          'clean'],
+    ['2026-06-03','Claudia','Dream Ohio',           90,  0, 'u2',          'clean'],
+    ['2026-06-04','Claudia','Dream 17th Pilsen',   110,  0, '',            'clean'],
+    ['2026-06-04','Claudia','Dream Ohio',           90,  0, 'u1',          'clean'],
+    ['2026-06-05','Claudia','Dream Huron',         120,  0, '',            'clean'],
+    ['2026-06-05','Claudia','Dwellish Warner',      95,  0, '',            'clean'],
+
+    // ── IVANNA ──
+    ['2026-05-31','Ivanna','Dream Polk 201',        90,  0, '',            'clean'],
+    ['2026-06-01','Ivanna','Dream Washington House',200, 0, '',            'clean'],
+    ['2026-06-02','Ivanna','Dream Polk 202',        90,  0, '',            'clean'],
+    ['2026-06-02','Ivanna','Dream Warren',         120,  0, '',            'clean'],
+    ['2026-06-03','Ivanna','Dream Paulina',         70,  0, '',            'clean'],
+
+    // ── NATALLIA ──
+    ['2026-05-30','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-05-31','Natallia','Dream Washington Apt 4', 120, -10, '', 'clean'],
+    ['2026-05-31','Natallia','Dream Washington Apt 2', 120, -10, '', 'clean'],
+    ['2026-06-01','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-06-01','Natallia','Dream Washington Apt 3', 120, -10, '', 'clean'],
+    ['2026-06-03','Natallia','Dream Washington Apt 2', 120, -10, '', 'clean'],
+    ['2026-06-05','Natallia','Dream Bell',          240, -10, '',           'clean'],
+    ['2026-06-05','Natallia','Dream Fairfield',     240, -10, '',           'clean'],
+    ['2026-06-05','Natallia','Dream Washington Apt 3', 120, -10, '',        'clean'],
+
+    // ── SABRINA ──
+    ['2026-05-30','Sabrina','Augusta 1E',           100, 0, '',             'clean'],
+    ['2026-05-31','Sabrina','Augusta 1W',           100, 0, '',             'clean'],
+    ['2026-06-01','Sabrina','Dream Michigan',       100, 0, '',             'clean'],
+    ['2026-06-02','Sabrina','Dream Claremont 2',     85, 0, '',             'clean'],
+    ['2026-06-03','Sabrina','Dream Polk 102',        80, 0, '',             'clean'],
+    ['2026-06-04','Sabrina','Dream Michigan',       100, 0, '',             'clean'],
+    ['2026-06-05','Sabrina','Dream Claremont 2',     85, 0, '',             'clean'],
+    ['2026-06-05','Sabrina','Dream Claremont Ground',70, 0, '',             'clean'],
+
+    // ── CAMILA ──
+    ['2026-05-31','Camila','Angela Home',           115, 0, '',             'clean'],
+    ['2026-05-31','Camila','Dwellish Southport',     95, 0, '',             'clean'],
+    ['2026-06-01','Camila','Augusta 1E',            100, 0, '',             'clean'],
+    ['2026-06-01','Camila','Dream Polk 101',         80, 0, '',             'clean'],
+    ['2026-06-02','Camila','Thomas George',          65, 0, '',             'clean'],
+    ['2026-06-03','Camila','Thomas Forest Park',     90, 0, '',             'clean'],
+    ['2026-06-04','Camila','Augusta 1E',            100, 0, '',             'clean'],
+
+    // ── LEXIE ──
+    ['2026-05-30','Lexie','Dream Claremont 1',       85, 0, '',             'clean'],
+    ['2026-05-30','Lexie','Dwellish Drexel',        130, 0, '',             'clean'],
+    ['2026-05-31','Lexie','2018 21st Jack',         100, 0, '',             'clean'],
+    ['2026-06-02','Lexie','Dream Grand 204',         70, 0, '',             'clean'],
+
+    // ── CORY ──
+    ['2026-05-30','Cory','Dream Nevele 508',        106, 0, '',             'clean'],
+    ['2026-05-31','Cory','Dwellish Wilton',         130, 0, '',             'clean'],
+    ['2026-06-01','Cory','Dream Nevele 508',        106, 0, '',             'clean'],
+    ['2026-06-02','Cory','Dream Magnolia',          150, 0, '',             'clean'],
+    ['2026-06-02','Cory','Dwellish Erie',           130, 0, '',             'clean'],
+    ['2026-06-05','Cory','Dream Nevele 508',        106, 0, '',             'clean'],
+    ['2026-06-05','Cory','Dream Patterson',         140, 0, '4w',           'clean'],
+    ['2026-06-05','Cory','Dwellish Wilton',         130, 0, '',             'clean'],
+
+    // ── KATYA ABDYMAZHITOVA ──
+    ['2026-05-30','Katya Abdymazhitova','Dream Winthrop 411', 75,  0,  '',           'clean'],
+    ['2026-05-31','Katya Abdymazhitova','Dream Winthrop 412', 75,  0,  '',           'clean'],
+    ['2026-05-31','Katya Abdymazhitova','Dream Winthrop 507', 75,  0,  '',           'clean'],
+    ['2026-06-01','Katya Abdymazhitova','Dream Winthrop 311', 75,  0,  '',           'clean'],
+    ['2026-06-02','Katya Abdymazhitova','Dream Winthrop 411', 75,  0,  '',           'clean'],
+    ['2026-06-03','Katya Abdymazhitova','Dream Winthrop 312', 75,  0,  '',           'clean'],
+    ['2026-06-04','Katya Abdymazhitova','Dream Winthrop 412', 75,  0,  '',           'clean'],
+    ['2026-06-04','Katya Abdymazhitova','Dream Winthrop 506', 75, 75,  'deep clean', 'clean'],
+    ['2026-06-04','Katya Abdymazhitova','Dream Winthrop 507', 75,  0,  '',           'clean'],
+    ['2026-06-05','Katya Abdymazhitova','Dream Winthrop 312', 75,  0,  '',           'clean'],
+
+    // ── WENDY ──
+    ['2026-05-30','Wendy','Dream Houston 2105',      140, 0, '',            'clean'],
+    ['2026-05-31','Wendy','Dream Houston 2105',      140, 0, '',            'clean'],
+    ['2026-05-31','Wendy','Dream Houston 2107',      140, 0, '',            'clean'],
+    ['2026-06-01','Wendy','Dream Houston 2103',      140, 0, '',            'clean'],
+    ['2026-06-04','Wendy','Dream Houston 2103 + 2105', 280, 0, '',         'clean'],
+    ['2026-06-05','Wendy','Dream Houston 2109',      140, 0, '',            'clean'],
+
+    // ── LUANA ──
+    ['2026-05-30','Luana','Dream Straits 1309',      100, 0, '',            'clean'],
+    ['2026-06-01','Luana','Dream Straits 1309',      100, 0, '',            'clean'],
+    ['2026-06-01','Luana','Dream Straits 1509',      100, 0, '',            'clean'],
+
+    // ── ANNA MACIATA ──
+    ['2026-05-30','Anna Maciata','Dream Polk 204',    90, 0, '',            'clean'],
+    ['2026-06-01','Anna Maciata','Dream Polk 203',    90, 0, '',            'clean'],
+    ['2026-06-04','Anna Maciata','Dream Polk 204',    90, 0, '',            'clean'],
+
+    // ── ANTONINA WISZNIEWSKI ──
+    ['2026-05-31','Antonina Wiszniewski','Dream Bingham', 200, 0, '',      'clean'],
+    ['2026-06-04','Antonina Wiszniewski','Dream Bingham', 200, 0, '',      'clean'],
+
+    // ── ELIZABETH ──
+    ['2026-05-31','Elizabeth','Dream Grand 403',      70, 0, '',            'clean'],
+    ['2026-05-31','Elizabeth','Thomas George',        65, 0, '',            'clean'],
+
+    // ── TAMMY ──
+    ['2026-06-03','Tammy','Dream Nekoosa',           300, 0, '',            'clean'],
+
+    // ── IONA ──
+    ['2026-05-30','Iona','Noble George 2',            75, 0, '',            'clean'],
+    ['2026-05-31','Iona','Dream Grand 203',           70, 0, '',            'clean'],
+    ['2026-05-31','Iona','Dream Grand 204',           70, 0, '',            'clean'],
+    ['2026-06-04','Iona','Noble George 2',            75, 0, '',            'clean'],
+    ['2026-06-04','Iona','Noble George 3',            65, 0, '',            'clean'],
+    ['2026-06-05','Iona','Dream Grand 203',           70, 0, '',            'clean'],
+
+    // ── BRECHELLE ──
+    ['2026-06-04','Brechelle','Dream Spearfish',     290, 0, '',            'clean'],
+
+    // ── IMELDA ──
+    ['2026-05-31','Imelda','Dream Claremont Ground',  70, 0, '',            'clean'],
+    ['2026-06-04','Imelda','Dream Claremont 1',       85, 0, '',            'clean'],
+    ['2026-06-04','Imelda','Dream Grand 403',         70, 0, '',            'clean'],
+
+    // ── COREE ──
+    ['2026-06-02','Coree','Dream Montana',           300, 0, '',            'clean'],
+    ['2026-06-05','Coree','Dream Montana',           300, 0, '',            'clean'],
+
+    // ── LUCY ──
+    ['2026-06-05','Lucy','Dream Polk 205',            90, 0, 'month long',  'clean'],
+
+    // ── CARIDAD ──
+    ['2026-06-05','Caridad','Dream Front Street',    210, 0, '',            'clean'],
+
+    // ── JORGE GALLARDO ──
+    ['2026-06-04','Jorge Gallardo','Jorge Old Chicago', 90, 0, '',          'clean'],
+
+    // ══════════════════════════════════════════════════════
+    // MAY 1 – MAY 29, 2026
+    // ══════════════════════════════════════════════════════
+    ['2026-05-01','Beatriz','Dream Largo', 200, 0, '', 'clean'],
+    ['2026-05-01','Claudia','Dream 17th Pilsen', 110, 0, '', 'clean'],
+    ['2026-05-01','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-01','Claudia','Dream Ohio', 85, 0, 'u1', 'clean'],
+    ['2026-05-01','Cory','Dream Nevele 508', 95, 11, 'new rate starting 5.1', 'clean'],
+    ['2026-05-01','Lexie','Dream Grand 203', 60, 0, '', 'clean'],
+    ['2026-05-01','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-01','Sabrina','Dream Michigan', 90, 0, '', 'clean'],
+    ['2026-05-01','Jocy','Dream Michigan', 25, 0, '', 'inspect'],
+    ['2026-05-01','Iona','Noble George 2', 75, 0, '', 'clean'],
+    ['2026-05-01','Jocy','Noble George 2', 15, 0, '', 'inspect'],
+    ['2026-05-01','Camila','Thomas Forest Park', 65, 0, '', 'clean'],
+    ['2026-05-01','Jocy','Thomas Forest Park', 10, 0, '', 'inspect'],
+    ['2026-05-01','Ivanna','Dream Paulina', 70, 0, '', 'clean'],
+    ['2026-05-01','Natallia','Dream Washington Unit 4', 120, 0, '', 'clean'],
+    ['2026-05-01','Tammy','Dream Nekoosa', 300, 0, '', 'clean'],
+    ['2026-05-01','Wendy','Dream Houston 2105', 135, 5, 'rate increase', 'clean'],
+    ['2026-05-01','Jocy','-', 430, 0, '', 'misc'],
+    ['2026-05-01','Claudia','-', -90, 0, 'Late cleanings', 'misc'],
+    ['2026-05-01','Lindsey','-', 40, 0, 'training new cleaner', 'misc'],
+    ['2026-05-01','Iona','-', 40, 0, 'Training bonus', 'misc'],
+    ['2026-05-02','Claudia','Dwel Warner', 130, -45, '', 'clean'],
+    ['2026-05-02','Cory','Dream Nevele 708', 95, 11, '', 'clean'],
+    ['2026-05-02','Lexie','Dream Grand 403', 60, 5, '', 'clean'],
+    ['2026-05-02','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-05-02','Sabrina','Dream Polk 101', 70, 10, '', 'clean'],
+    ['2026-05-02','Katya Abdymazhitova','Dream Winthrop 311', 75, 0, '', 'clean'],
+    ['2026-05-02','Jocy','Dream Winthrop 311', 15, 5, '', 'inspect'],
+    ['2026-05-02','Katya Abdymazhitova','Dream Winthrop 411', 75, 0, '', 'clean'],
+    ['2026-05-02','Jocy','Dream Winthrop 411', 15, 5, '', 'inspect'],
+    ['2026-05-02','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-05-02','Wendy','Dream Houston 2107 + 2109', 270, 10, '', 'clean'],
+    ['2026-05-03','Anna Maciata','Dream Polk 204', 85, 0, '', 'clean'],
+    ['2026-05-03','Brechelle','Dream Spearfish', 290, 0, '', 'clean'],
+    ['2026-05-03','Caridad','Dream Front Street', 210, 0, '', 'clean'],
+    ['2026-05-03','Claudia','Dream 18th Pilsen', 85, 0, '1a', 'clean'],
+    ['2026-05-03','Claudia','Dream 18th Pilsen', 85, 0, '1b', 'clean'],
+    ['2026-05-03','Claudia','Dream Beach', 200, 0, '', 'clean'],
+    ['2026-05-03','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-03','Claudia','Dwellish Hermitage', 130, 0, '', 'clean'],
+    ['2026-05-03','Claudia','Dream Ohio', 85, 0, '', 'clean'],
+    ['2026-05-03','Cory','Dream Fairfield', 240, 0, '', 'clean'],
+    ['2026-05-03','Cory','Dream Nevele 508', 106, 11, '', 'clean'],
+    ['2026-05-03','Cory','Dwellish Wilton', 100, 50, '', 'clean'],
+    ['2026-05-03','Camila','Angela Home', 115, 0, '', 'clean'],
+    ['2026-05-03','Jocy','Angela Home', 10, 0, '', 'inspect'],
+    ['2026-05-03','Sabrina','Augusta 1E', 90, 40, 'extra for cat hair', 'clean'],
+    ['2026-05-03','Sabrina','Augusta 1W', 80, 20, '', 'clean'],
+    ['2026-05-03','Imelda','Dream Carpenter', 140, 0, '', 'clean'],
+    ['2026-05-03','Jocy','Dream Carpenter', 15, 5, '', 'inspect'],
+    ['2026-05-03','Elizabeth','Dream Claremont 1', 80, 5, '', 'clean'],
+    ['2026-05-03','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-05-03','Jocy','Dream Claremont 2', 80, 25, '', 'clean'],
+    ['2026-05-03','Iona','Dream Grand 203', 60, 10, '', 'clean'],
+    ['2026-05-03','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-03','Iona','Dream Grand 204', 60, 10, '', 'clean'],
+    ['2026-05-03','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-05-03','Katya Abdymazhitova','Dream Winthrop 506', 75, 0, '', 'clean'],
+    ['2026-05-03','Jocy','Dream Winthrop 506', 20, 0, '', 'inspect'],
+    ['2026-05-03','Lexie','Dwellish Drexel', 120, 10, '', 'clean'],
+    ['2026-05-03','Lucy','Dream Paulina', 0, 0, '', 'clean'],
+    ['2026-05-03','Ivanna','Dream Washington House', 200, 0, '', 'clean'],
+    ['2026-05-03','Antonina Wiszniewski','Dream Bell', 220, 0, '', 'clean'],
+    ['2026-05-03','Natallia','Dream Washington Unit 4', 120, -10, '', 'clean'],
+    ['2026-05-03','Tammy','Dream Nekoosa', 300, 0, '', 'clean'],
+    ['2026-05-04','Claudia','Dream Ohio', 85, 0, 'u1', 'clean'],
+    ['2026-05-04','Claudia','Dream Willard', 120, 0, '', 'clean'],
+    ['2026-05-04','Claudia','Village Inn', 125, 0, '', 'clean'],
+    ['2026-05-04','Cory','Dream Throop', 230, 40, '', 'clean'],
+    ['2026-05-04','Cory','Lee Reta', 200, -60, '', 'clean'],
+    ['2026-05-04','Cory','Thomas Andersonville', 224, 0, '', 'clean'],
+    ['2026-05-04','Lexie','2018 21st Jack', 100, 0, '', 'clean'],
+    ['2026-05-04','Jocy','2018 21st Jack', 20, 0, '', 'inspect'],
+    ['2026-05-04','Iona','Dream Grand 403', 60, 10, '', 'clean'],
+    ['2026-05-04','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-05-04','Sabrina','Dream Michigan', 90, 10, '', 'clean'],
+    ['2026-05-04','Jocy','Dream Michigan', 25, 0, '', 'inspect'],
+    ['2026-05-04','Luana','Dream Polk 102', 70, 0, '', 'clean'],
+    ['2026-05-04','Katya Abdymazhitova','Dream Winthrop 311', 75, 0, '', 'clean'],
+    ['2026-05-04','Jocy','Dream Winthrop 311', 15, 5, '', 'inspect'],
+    ['2026-05-04','Katya Abdymazhitova','Dream Winthrop 312', 75, 0, '', 'clean'],
+    ['2026-05-04','Jocy','Dream Winthrop 312', 15, 5, '', 'inspect'],
+    ['2026-05-04','Katya Abdymazhitova','Dream Winthrop 411', 75, 0, '', 'clean'],
+    ['2026-05-04','Jocy','Dream Winthrop 411', 15, 5, '', 'inspect'],
+    ['2026-05-04','Elizabeth','Noble George 2', 75, 0, '', 'clean'],
+    ['2026-05-04','Natallia','Dream Washington Apt 3', 135, -10, '', 'clean'],
+    ['2026-05-04','Wendy','Dream Houston 2103', 135, 5, '', 'clean'],
+    ['2026-05-04','Wendy','Dream Houston 2105', 140, 0, '', 'clean'],
+    ['2026-05-04','Wendy','Dream Houston 2107 + 2109', 270, 10, '', 'clean'],
+    ['2026-05-04','Antonina Wiszniewski','Dream Bingham', 200, 0, '', 'clean'],
+    ['2026-05-05','Anna Maciata','Dream Polk 203', 85, 0, '', 'clean'],
+    ['2026-05-05','Claudia','Dream 17th Pilsen', 110, 0, '', 'clean'],
+    ['2026-05-05','Cory','Dream Nevele 708', 95, 11, '', 'clean'],
+    ['2026-05-05','Cory','Dwellish Erie', 80, 30, '', 'clean'],
+    ['2026-05-05','Sabrina','Dream Claremont 2', 80, 5, '', 'clean'],
+    ['2026-05-05','Jocy','Dream Claremont 2', 20, 0, '', 'inspect'],
+    ['2026-05-05','Iona','Dream Claremont Ground', 65, 5, '', 'clean'],
+    ['2026-05-05','Jocy','Dream Claremont Ground', 15, 5, '', 'inspect'],
+    ['2026-05-05','Sabrina','Dream Polk 101', 70, 10, '', 'clean'],
+    ['2026-05-05','Luana','Dream Straits 1409', 100, 0, '', 'clean'],
+    ['2026-05-05','Jocy','Dream Straits 1409', 20, 0, '', 'inspect'],
+    ['2026-05-05','Katya Abdymazhitova','Dream Winthrop 412', 75, 0, '', 'clean'],
+    ['2026-05-05','Jocy','Dream Winthrop 412', 15, 5, '', 'inspect'],
+    ['2026-05-05','Katya Abdymazhitova','Dream Winthrop 507', 75, 0, '', 'clean'],
+    ['2026-05-05','Jocy','Dream Winthrop 507', 15, 5, '', 'inspect'],
+    ['2026-05-05','Luana','Thomas Fry', 60, 0, '2f', 'clean'],
+    ['2026-05-05','Jocy','Thomas Fry', 20, 0, '2f', 'inspect'],
+    ['2026-05-05','Natallia','Dream Washington Unit 4', 120, 0, '', 'clean'],
+    ['2026-05-06','Anna Maciata','Dream Polk 201', 85, 0, '', 'clean'],
+    ['2026-05-06','Claudia','Dream Beach', 200, 0, '', 'clean'],
+    ['2026-05-06','Claudia','Dream Ohio', 85, 0, 'u1', 'clean'],
+    ['2026-05-06','Claudia','Dwel Warner', 130, 0, '', 'clean'],
+    ['2026-05-06','Sabrina','Augusta 1E', 90, 10, 'Keypad Battery Replacement', 'clean'],
+    ['2026-05-06','Lexie','Dream Grand 203', 60, 5, '', 'clean'],
+    ['2026-05-06','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-06','Sabrina','Dream Polk 102', 70, 10, '', 'clean'],
+    ['2026-05-06','Katya Abdymazhitova','Dream Winthrop 411', 75, 0, '', 'clean'],
+    ['2026-05-06','Jocy','Dream Winthrop 411', 15, 5, '', 'inspect'],
+    ['2026-05-06','Katya Abdymazhitova','Dream Winthrop 506', 75, 0, '', 'clean'],
+    ['2026-05-06','Jocy','Dream Winthrop 506', 20, 0, '', 'inspect'],
+    ['2026-05-06','Ivanna','Dream Paulina', 70, 0, '', 'clean'],
+    ['2026-05-06','Wendy','Dream Houston 2103', 135, 5, '', 'clean'],
+    ['2026-05-06','Wendy','Dream Houston 2107 + 2109', 270, 10, '', 'clean'],
+    ['2026-05-07','Claudia','Dream 18th Pilsen', 85, 0, '1b', 'clean'],
+    ['2026-05-07','Claudia','Dwellish Ohio', 110, 0, '', 'clean'],
+    ['2026-05-07','Cory','Dream Magnolia', 140, 10, '', 'clean'],
+    ['2026-05-07','Cory','Dream Nevele 708', 95, 11, '', 'clean'],
+    ['2026-05-07','Cory','Dwellish Wilton', 100, 50, '', 'clean'],
+    ['2026-05-07','Elizabeth','Dream Claremont 1', 80, 5, '', 'clean'],
+    ['2026-05-07','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-05-07','Jocy','-', 0, 0, 'Drop off Extra Sponge', 'misc'],
+    ['2026-05-07','Lexie','Dream Grand 204', 60, 5, '', 'clean'],
+    ['2026-05-07','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-05-07','Sabrina','Dream Michigan', 90, 10, '', 'clean'],
+    ['2026-05-07','Jocy','Dream Michigan', 25, 0, '', 'inspect'],
+    ['2026-05-07','Luana','Dream Straits 1509', 100, 0, '', 'clean'],
+    ['2026-05-07','Jocy','Dream Straits 1509', 20, 0, '', 'inspect'],
+    ['2026-05-07','Katya Abdymazhitova','Dream Winthrop 311', 75, 0, '', 'clean'],
+    ['2026-05-07','Jocy','Dream Winthrop 311', 15, 5, '', 'inspect'],
+    ['2026-05-07','Camila','Dwellish Southport', 90, 5, '', 'clean'],
+    ['2026-05-07','Jocy','Dwellish Southport', 15, 5, '', 'inspect'],
+    ['2026-05-07','Natallia','Dream Washington Unit 4', 120, -10, '', 'clean'],
+    ['2026-05-08','Anna Maciata','Dream Polk 201', 85, 0, '', 'clean'],
+    ['2026-05-08','Brechelle','Dream Spearfish', 290, 0, '', 'clean'],
+    ['2026-05-08','Claudia','Dream 18th Pilsen', 85, 0, '1a', 'clean'],
+    ['2026-05-08','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-08','Claudia','Dream Ohio', 85, 0, 'u1', 'clean'],
+    ['2026-05-08','Cory','Dream Throop', 230, 40, '', 'clean'],
+    ['2026-05-08','Lexie','2018 21st Jack', 100, 0, '', 'clean'],
+    ['2026-05-08','Camila','Dream Claremont Ground', 65, 5, '', 'clean'],
+    ['2026-05-08','Jocy','Dream Claremont Ground', 15, 5, '', 'inspect'],
+    ['2026-05-08','Iona','Dream Grand 203', 60, 10, '', 'clean'],
+    ['2026-05-08','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-08','Luana','Dream Straits 1409', 100, 0, '', 'clean'],
+    ['2026-05-08','Jocy','Dream Straits 1409', 20, 0, '', 'inspect'],
+    ['2026-05-08','Jocy','Dwellish Drexel', 120, 40, '', 'clean'],
+    ['2026-05-08','Elizabeth','Noble George 2', 75, 0, '', 'clean'],
+    ['2026-05-08','Jocy','Noble George 2', 15, 0, '', 'inspect'],
+    ['2026-05-08','Ivanna','Dream Warren', 120, 0, '', 'clean'],
+    ['2026-05-08','Claudia','Dream Fairfield', 240, 0, '', 'clean'],
+    ['2026-05-08','Jocy','-', 160, 0, 'missing checks', 'misc'],
+    ['2026-05-08','Jocy','-', 20, 0, '', 'misc'],
+    ['2026-05-08','Claudia','-', -40, 0, '', 'misc'],
+    ['2026-05-08','Cory','-', 29.65, 0, '', 'misc'],
+    ['2026-05-08','Tammy','-', 180, 0, '', 'misc'],
+    ['2026-05-09','Wendy','Dream Houston 2103', 140, 0, '', 'clean'],
+    ['2026-05-09','Wendy','Dream Houston 2105', 140, 0, '', 'clean'],
+    ['2026-05-09','Wendy','Dream Houston 2109', 140, 0, '', 'clean'],
+    ['2026-05-09','Ivanna','Dream Polk 203', 90, 0, '', 'clean'],
+    ['2026-05-09','Ivanna','Dream Polk 204', 90, 0, '', 'clean'],
+    ['2026-05-09','Claudia','Dream 18th Pilsen', 85, 0, '1b', 'clean'],
+    ['2026-05-09','Claudia','Dream Beach', 200, 0, '', 'clean'],
+    ['2026-05-09','Claudia','Dream Willard', 120, 0, '', 'clean'],
+    ['2026-05-09','Claudia','Dwellish Warner', 95, 0, '', 'clean'],
+    ['2026-05-09','Cory','Dwellish Erie', 130, 0, 'w/ Katya', 'clean'],
+    ['2026-05-09','Cory','Thomas Andersonville', 224, 0, '', 'clean'],
+    ['2026-05-09','Lexie','Dream Grand 403', 70, 0, '', 'clean'],
+    ['2026-05-09','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-05-09','Luana','Dream Straits 1309', 100, 0, '', 'clean'],
+    ['2026-05-09','Jocy','Dream Straits 1309', 20, 0, '', 'inspect'],
+    ['2026-05-09','Katya Abdymazhitova','Dream Winthrop 312', 75, 0, '', 'clean'],
+    ['2026-05-09','Jocy','Dream Winthrop 312', 20, 0, '', 'inspect'],
+    ['2026-05-09','Katya Abdymazhitova','Dream Winthrop 411', 75, 0, '', 'clean'],
+    ['2026-05-09','Jocy','Dream Winthrop 411', 20, 0, '', 'inspect'],
+    ['2026-05-09','Katya Abdymazhitova','Dream Winthrop 507', 75, 0, '', 'clean'],
+    ['2026-05-09','Jocy','Dream Winthrop 507', 20, 0, '', 'inspect'],
+    ['2026-05-09','Iona','Thomas George', 60, 0, '', 'clean'],
+    ['2026-05-09','Jocy','Thomas George', 20, 0, '', 'inspect'],
+    ['2026-05-09','Natallia','Dream Bell', 240, -10, '', 'clean'],
+    ['2026-05-09','Natallia','Dream Race', 220, -10, '', 'clean'],
+    ['2026-05-10','Antonina Wiszniewski','Dream Bingham', 200, 100, "Mother\'s Day", 'clean'],
+    ['2026-05-10','Brechelle','Dream Spearfish', 290, 0, '', 'clean'],
+    ['2026-05-10','Claudia','Dream Ohio', 90, 45, "u2 - Mother\'s Day", 'clean'],
+    ['2026-05-10','Cory','Dream Nevele 508', 106, 53, '', 'clean'],
+    ['2026-05-10','Jocy','Dream Michigan', 120, 60, "Mother\'s Day", 'clean'],
+    ['2026-05-10','Katya Abdymazhitova','Dream Winthrop 412', 75, 37.5, "Mother\'s Day", 'clean'],
+    ['2026-05-10','Jocy','Dream Winthrop 412', 20, 0, '', 'inspect'],
+    ['2026-05-10','Jocy','Thomas Fry', 80, 0, '2f', 'clean'],
+    ['2026-05-10','Claudia','Dream Fairfield', 240, 120, "Mother\'s Day", 'clean'],
+    ['2026-05-11','Wendy','Dream Houston 2105', 140, 0, '', 'clean'],
+    ['2026-05-11','Wendy','Dream Houston 2107', 140, 0, '', 'clean'],
+    ['2026-05-11','Wendy','Dream Houston 2109', 140, 0, '', 'clean'],
+    ['2026-05-11','Anna Maciata','Dream Polk 201', 90, 0, '', 'clean'],
+    ['2026-05-11','Anna Maciata','Dream Polk 203', 90, 0, '', 'clean'],
+    ['2026-05-11','Claudia','Dream 17th Pilsen', 110, 0, '', 'clean'],
+    ['2026-05-11','Claudia','Dream Beach', 200, 0, '', 'clean'],
+    ['2026-05-11','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-11','Claudia','Dream Ohio', 90, 0, 'u1', 'clean'],
+    ['2026-05-11','Claudia','Dwellish Hermitage', 80, 0, '', 'clean'],
+    ['2026-05-11','Claudia','Dwellish Ohio', 140, 0, '', 'clean'],
+    ['2026-05-11','Claudia','Village Inn', 130, 0, '', 'clean'],
+    ['2026-05-11','Cory','Dream Magnolia', 150, 150, 'Deep Clean', 'clean'],
+    ['2026-05-11','Cory','Dream Throop', 270, 0, '', 'clean'],
+    ['2026-05-11','Cory','Dwellish Wilton', 130, 0, '', 'clean'],
+    ['2026-05-11','Lexie','2018 21st Jack', 100, 0, '', 'clean'],
+    ['2026-05-11','Sabrina','Augusta 1E', 100, 0, '', 'clean'],
+    ['2026-05-11','Sabrina','Augusta 1W', 100, 0, '', 'clean'],
+    ['2026-05-11','Jocy','Augusta 1W', 20, 0, '', 'inspect'],
+    ['2026-05-11','Jocy','Augusta 1E', 20, 0, '', 'inspect'],
+    ['2026-05-11','Elizabeth','Dream Claremont 1', 85, 0, '', 'clean'],
+    ['2026-05-11','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-05-11','Elizabeth','Dream Claremont Ground', 70, 0, '', 'clean'],
+    ['2026-05-11','Jocy','Dream Claremont Ground', 20, 0, '', 'inspect'],
+    ['2026-05-11','Jocy','Dream Polk 102', 90, 110, 'Quarterly Deep Clean', 'clean'],
+    ['2026-05-11','Luana','Dream Straits 1509', 100, 0, '', 'clean'],
+    ['2026-05-11','Jocy','Dream Straits 1509', 20, 0, '', 'inspect'],
+    ['2026-05-11','Katya Abdymazhitova','Dream Winthrop 311', 75, 0, '', 'clean'],
+    ['2026-05-11','Jocy','Dream Winthrop 311', 20, 0, '', 'inspect'],
+    ['2026-05-11','Katya Abdymazhitova','Dream Winthrop 506', 75, 0, '', 'clean'],
+    ['2026-05-11','Jocy','Dream Winthrop 506', 20, 0, '', 'inspect'],
+    ['2026-05-11','Lexie','Dwellish Drexel', 130, 0, '', 'clean'],
+    ['2026-05-11','Camila','Dwellish Southport', 95, 0, '', 'clean'],
+    ['2026-05-11','Jocy','Dwellish Southport', 15, 0, '', 'inspect'],
+    ['2026-05-11','Iona','Noble George 2', 75, 0, '', 'clean'],
+    ['2026-05-11','Iona','Noble George 3', 65, 0, '', 'clean'],
+    ['2026-05-11','Ivanna','Dream Washington House', 200, 0, '', 'clean'],
+    ['2026-05-11','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-05-12','Ivanna','Dream Polk 202', 90, 0, '', 'clean'],
+    ['2026-05-12','Ivanna','Dream Polk 205', 90, 90, 'month long', 'clean'],
+    ['2026-05-12','Claudia','Dream 18th Pilsen', 85, 0, '1b', 'clean'],
+    ['2026-05-12','Claudia','Dream Ohio', 90, 0, 'u2', 'clean'],
+    ['2026-05-12','Iona','Dream Grand 203', 70, 0, '', 'clean'],
+    ['2026-05-12','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-12','Katya Abdymazhitova','Dream Winthrop 507', 75, 75, 'Deep clean', 'clean'],
+    ['2026-05-12','Jocy','Dream Winthrop 507', 20, 0, '', 'inspect'],
+    ['2026-05-12','Natallia','Dream Fairfield', 240, -10, '', 'clean'],
+    ['2026-05-12','Natallia','Dream Washington Apt 2', 120, -10, '', 'clean'],
+    ['2026-05-13','Tammy','Dream Nekoosa', 300, 0, '', 'clean'],
+    ['2026-05-13','Wendy','Dream Houston 2107 + 2109', 280, 0, '', 'clean'],
+    ['2026-05-13','Claudia','Dream 18th Pilsen', 85, 0, '1a', 'clean'],
+    ['2026-05-13','Claudia','Dream Willard', 120, 0, '', 'clean'],
+    ['2026-05-13','Cory','Dream Nevele 708', 106, 0, '', 'clean'],
+    ['2026-05-13','Sabrina','Dream Claremont 1', 85, 0, '', 'clean'],
+    ['2026-05-13','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-05-13','Sabrina','Dream Claremont 2', 85, 0, '', 'clean'],
+    ['2026-05-13','Jocy','Dream Claremont 2', 20, 0, '', 'inspect'],
+    ['2026-05-13','Camila','Dream Claremont Ground', 70, 0, '', 'clean'],
+    ['2026-05-13','Jocy','Dream Claremont Ground', 20, 0, '', 'inspect'],
+    ['2026-05-13','Katya Abdymazhitova','Dream Winthrop 312', 75, 75, 'Deep clean', 'clean'],
+    ['2026-05-13','Jocy','Dream Winthrop 312', 20, 0, '', 'inspect'],
+    ['2026-05-13','Katya Abdymazhitova','Dream Winthrop 412', 75, 0, '', 'clean'],
+    ['2026-05-13','Jocy','Dream Winthrop 412', 20, 0, '', 'inspect'],
+    ['2026-05-13','Camila','Thomas Forest Park', 90, 0, '', 'clean'],
+    ['2026-05-13','Jocy','Thomas Forest Park', 10, 0, '', 'inspect'],
+    ['2026-05-13','Ivanna','Dream Washington House', 200, 0, '', 'clean'],
+    ['2026-05-13','Natallia','Dream Bell', 240, -10, '', 'clean'],
+    ['2026-05-14','Wendy','Dream Houston 2103', 140, 0, '', 'clean'],
+    ['2026-05-14','Jocy','Angela Home', 130, 0, '', 'clean'],
+    ['2026-05-14','Iona','Dream Grand 203', 70, 0, '', 'clean'],
+    ['2026-05-14','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-14','Iona','Dream Grand 403', 70, 70, '', 'clean'],
+    ['2026-05-14','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-05-14','Sabrina','Dream Michigan', 100, 0, '', 'clean'],
+    ['2026-05-14','Jocy','Dream Michigan', 20, 0, '', 'inspect'],
+    ['2026-05-14','Luana','Dream Straits 1409', 100, 0, '', 'clean'],
+    ['2026-05-14','Jocy','Dream Straits 1409', 20, 0, '', 'inspect'],
+    ['2026-05-14','Luana','Dream Straits 1309', 100, 0, '', 'clean'],
+    ['2026-05-14','Jocy','Dream Straits 1309', 20, 0, '', 'inspect'],
+    ['2026-05-14','Luana','Dream Straits 1509', 100, 0, '', 'clean'],
+    ['2026-05-14','Jocy','Dream Straits 1509', 20, 0, '', 'inspect'],
+    ['2026-05-14','Sabrina','Thomas Fry', 60, 0, '2f', 'clean'],
+    ['2026-05-14','Natallia','Dream Race', 220, -10, '', 'clean'],
+    ['2026-05-14','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-05-15','Antonina Wiszniewski','Dream Bingham', 200, 0, '', 'clean'],
+    ['2026-05-15','Wendy','Dream Houston 2105', 140, 140, 'Deep clean', 'clean'],
+    ['2026-05-15','Anna Maciata','Dream Polk 202', 90, 0, '', 'clean'],
+    ['2026-05-15','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-15','Claudia','Dream Ohio', 90, 0, 'u2', 'clean'],
+    ['2026-05-15','Claudia','Dream Ohio', 90, 0, 'Quarterly Deep Clean', 'clean'],
+    ['2026-05-15','Claudia','Dwellish Hermitage', 80, 0, '', 'clean'],
+    ['2026-05-15','Claudia','Dwellish Ohio', 140, 0, '', 'clean'],
+    ['2026-05-15','Coree','Dream Montana', 300, 0, '', 'clean'],
+    ['2026-05-15','Cory','Dream Patterson', 140, 0, '4w', 'clean'],
+    ['2026-05-15','Cory','Dream Throop', 270, 0, '', 'clean'],
+    ['2026-05-15','Camila','Dream Grand 204', 70, 70, 'Deep', 'clean'],
+    ['2026-05-15','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-05-15','Sabrina','Dream Polk 102', 80, 0, '', 'clean'],
+    ['2026-05-15','Katya Abdymazhitova','Dream Winthrop 411', 75, 0, '', 'clean'],
+    ['2026-05-15','Jocy','Dream Winthrop 411', 20, 0, '', 'inspect'],
+    ['2026-05-15','Luana','Jorge Old Chicago', 90, 0, '', 'clean'],
+    ['2026-05-15','Jocy','Jorge Old Chicago', 20, 0, '', 'inspect'],
+    ['2026-05-15','Camila','Noble George 3', 65, 0, '', 'clean'],
+    ['2026-05-15','Natallia','Dream Paulina', 70, -10, '', 'clean'],
+    ['2026-05-15','Ivanna','Dream Fairfield', 240, 0, '', 'clean'],
+    ['2026-05-15','Natallia','Dream Washington Apt 4', 120, -10, '', 'clean'],
+    ['2026-05-15','Natallia','Dream Washington Apt 3', 120, -10, '', 'clean'],
+    ['2026-05-15','Jocy','-', 110, 0, 'Manage Cleans', 'misc'],
+    ['2026-05-15','Jocy','-', 30, 0, 'Slack', 'misc'],
+    ['2026-05-15','Claudia','-', 45.63, 0, 'laundry', 'misc'],
+    ['2026-05-15','Claudia','-', 26.91, 0, '', 'misc'],
+    ['2026-05-15','Claudia','-', 60, 0, '', 'misc'],
+    ['2026-05-15','Natallia','-', 110, 0, 'Previous week', 'misc'],
+    ['2026-05-15','Natallia','-', 110, 0, 'Previous week 2', 'misc'],
+    ['2026-05-15','Natallia','-', 220, 0, 'Previous week 3', 'misc'],
+    ['2026-05-15','Natallia','-', 230, 0, 'Deep Cleans', 'misc'],
+    ['2026-05-15','Natallia','-', 110, 0, 'Deep Cleans 2', 'misc'],
+    ['2026-05-15','Natallia','-', 110, 0, 'Deep Cleans 3', 'misc'],
+    ['2026-05-15','Natallia','-', 110, 0, 'Deep Cleans 4', 'misc'],
+    ['2026-05-15','Sabrina','-', 140, 0, 'Daniel', 'misc'],
+    ['2026-05-15','Luana','-', 530, 0, 'last week', 'misc'],
+    ['2026-05-15','Anna Maciata','-', 360, 0, 'last week', 'misc'],
+    ['2026-05-15','Tammy','-', 325, 0, 'extra work', 'misc'],
+    ['2026-05-16','Wendy','Dream Houston 2103', 140, 0, '', 'clean'],
+    ['2026-05-16','Wendy','Dream Houston 2107 + 2109', 280, 0, '', 'clean'],
+    ['2026-05-16','Beatriz','Dream Largo', 200, 0, '', 'clean'],
+    ['2026-05-16','Claudia','Dream 17th Pilsen', 110, 0, '', 'clean'],
+    ['2026-05-16','Claudia','Dream 18th Pilsen', 85, 0, '1a', 'clean'],
+    ['2026-05-16','Cory','Dream Nevele 708', 106, 0, '', 'clean'],
+    ['2026-05-16','Cory','Dwellish Erie', 130, 0, '', 'clean'],
+    ['2026-05-16','Sabrina','Dream Claremont 1', 85, 0, '', 'clean'],
+    ['2026-05-16','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-05-16','Luana','Dream Straits 1309', 100, 0, '', 'clean'],
+    ['2026-05-16','Jocy','Dream Straits 1309', 20, 0, '', 'inspect'],
+    ['2026-05-16','Katya Abdymazhitova','Dream Winthrop 311', 75, 0, '', 'clean'],
+    ['2026-05-16','Jocy','Dream Winthrop 311', 20, 0, '', 'inspect'],
+    ['2026-05-16','Camila','Dwellish Southport', 95, 0, '', 'clean'],
+    ['2026-05-16','Jocy','Dwellish Southport', 25, 0, '', 'inspect'],
+    ['2026-05-16','Katya Abdymazhitova','Thomas Belle', 80, 0, '', 'clean'],
+    ['2026-05-16','Jocy','Thomas Belle', 20, 0, '', 'inspect'],
+    ['2026-05-16','Luana','Thomas Fry', 60, 0, '2f', 'clean'],
+    ['2026-05-16','Jocy','Thomas Fry', 20, 0, '2f', 'inspect'],
+    ['2026-05-16','Ivanna','Dream Warren', 120, 0, '', 'clean'],
+    ['2026-05-17','Wendy','Dream Houston 2109', 140, 0, '', 'clean'],
+    ['2026-05-17','Antonina Wiszniewski','Dream Bingham', 200, 0, '', 'clean'],
+    ['2026-05-17','Tammy','Dream Nekoosa', 300, 0, '', 'clean'],
+    ['2026-05-17','Ivanna','Dream Polk 201', 90, 90, 'deep clean', 'clean'],
+    ['2026-05-17','Brechelle','Dream Spearfish', 290, 0, '', 'clean'],
+    ['2026-05-17','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-17','Claudia','Dream Ohio', 90, 0, 'u1', 'clean'],
+    ['2026-05-17','Claudia','Dream Willard', 120, 0, '', 'clean'],
+    ['2026-05-17','Claudia','Dwellish Ohio', 140, 0, '', 'clean'],
+    ['2026-05-17','Katya Abdymazhitova','Dwellish Warner', 95, 155, 'late notice', 'clean'],
+    ['2026-05-17','Jocy','Dwellish Warner', 25, 0, '', 'inspect'],
+    ['2026-05-17','Cory','Dream Magnolia', 150, 0, '', 'clean'],
+    ['2026-05-17','Cory','Dream Throop', 270, 270, 'deep clean', 'clean'],
+    ['2026-05-17','Cory','Lee Reta', 125, 0, '', 'clean'],
+    ['2026-05-17','Lexie','Dream Claremont 2', 85, 85, 'Quarterly Deep Clean', 'clean'],
+    ['2026-05-17','Jocy','Dream Claremont 2', 20, 0, 'Quarterly Deep Clean', 'inspect'],
+    ['2026-05-17','Sabrina','Dream Claremont Ground', 70, 70, 'Quarterly Deep Clean', 'clean'],
+    ['2026-05-17','Jocy','Dream Claremont Ground', 20, 0, 'Quarterly Deep Clean', 'inspect'],
+    ['2026-05-17','Katya Abdymazhitova','Dream Winthrop 312', 75, 0, '', 'clean'],
+    ['2026-05-17','Jocy','Dream Winthrop 312', 20, 0, '', 'inspect'],
+    ['2026-05-17','Katya Abdymazhitova','Dream Winthrop 507', 75, 0, '', 'clean'],
+    ['2026-05-17','Jocy','Dream Winthrop 507', 20, 0, '', 'inspect'],
+    ['2026-05-17','Luana','Jorge Old Chicago', 90, 0, '', 'clean'],
+    ['2026-05-17','Jocy','Jorge Old Chicago', 20, 0, '', 'inspect'],
+    ['2026-05-17','Natallia','Dream Fairfield', 240, -10, '', 'clean'],
+    ['2026-05-17','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-05-17','Natallia','Dream Washington Apt 2', 120, -120, '', 'clean'],
+    ['2026-05-18','Wendy','Dream Houston 2107', 140, 0, '', 'clean'],
+    ['2026-05-18','Wendy','Dream Houston 2103', 140, 0, '', 'clean'],
+    ['2026-05-18','Ivanna','Dream Polk 205', 90, 0, 'Month Long', 'clean'],
+    ['2026-05-18','Claudia','Dwellish Hermitage', 80, 0, '', 'clean'],
+    ['2026-05-18','Cory','Dream Nevele 708', 106, 0, '', 'clean'],
+    ['2026-05-18','Cory','Dwellish Erie', 130, 0, '', 'clean'],
+    ['2026-05-18','Cory','Dwellish Wilton', 130, 0, '', 'clean'],
+    ['2026-05-18','Cory','Thomas Andersonville', 224, 0, '', 'clean'],
+    ['2026-05-18','Lexie','2018 21st Jack', 100, 0, '', 'clean'],
+    ['2026-05-18','Jocy','2018 21st Jack', 20, 0, '', 'inspect'],
+    ['2026-05-18','Sabrina','Augusta 1W', 100, 100, '*', 'clean'],
+    ['2026-05-18','Iona','Dream Grand 403', 70, 0, '', 'clean'],
+    ['2026-05-18','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-05-18','Camila','Dream Polk 102', 80, 0, '', 'clean'],
+    ['2026-05-18','Jocy','Dream Polk 102', 20, 0, '', 'inspect'],
+    ['2026-05-18','Luana','Dream Straits 1409', 100, 0, '', 'clean'],
+    ['2026-05-18','Jocy','Dream Straits 1409', 20, 0, '', 'inspect'],
+    ['2026-05-18','Katya Abdymazhitova','Dream Winthrop 411', 75, 0, '', 'clean'],
+    ['2026-05-18','Jocy','Dream Winthrop 411', 20, 0, '', 'inspect'],
+    ['2026-05-18','Katya Abdymazhitova','Dream Winthrop 506', 75, 0, '', 'clean'],
+    ['2026-05-18','Jocy','Dream Winthrop 506', 20, 0, '', 'inspect'],
+    ['2026-05-18','Camila','Thomas Fry', 60, 0, '2f', 'clean'],
+    ['2026-05-18','Jocy','Thomas Fry', 20, 0, '2f', 'inspect'],
+    ['2026-05-18','Ivanna','Dream Paulina', 70, 70, 'deep clean', 'clean'],
+    ['2026-05-18','Ivanna','Dream Warren', 120, 0, '', 'clean'],
+    ['2026-05-18','Natallia','Dream Bell', 240, -10, '', 'clean'],
+    ['2026-05-18','Natallia','Dream Race', 220, -10, '', 'clean'],
+    ['2026-05-18','Natallia','Dream Washington Apt 4', 120, -10, '', 'clean'],
+    ['2026-05-19','Wendy','Dream Houston 2105', 140, 0, '', 'clean'],
+    ['2026-05-19','Anna Maciata','Dream Polk 202', 90, 0, '', 'clean'],
+    ['2026-05-19','Ivanna','Dream Polk 203', 90, 90, 'deep clean', 'clean'],
+    ['2026-05-19','Beatriz','Dream Largo', 200, 0, '', 'clean'],
+    ['2026-05-19','Claudia','Dream 18th Pilsen', 85, 0, '1a', 'clean'],
+    ['2026-05-19','Claudia','Dream Beach', 200, 0, 'Quarterly Deep Clean', 'clean'],
+    ['2026-05-19','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-19','Cory','Dream Throop', 270, 0, '', 'clean'],
+    ['2026-05-19','Camila','Angela Home', 115, 0, '', 'clean'],
+    ['2026-05-19','Jocy','Angela Home', 15, 0, '', 'inspect'],
+    ['2026-05-19','Sabrina','Augusta 1E', 100, 0, '*', 'clean'],
+    ['2026-05-19','Sabrina','Dream Grand 204', 70, 0, '', 'clean'],
+    ['2026-05-19','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-05-19','Jocy','Dream Straits 1309', 20, 0, 'Post Clean Inspection Only', 'inspect'],
+    ['2026-05-19','Luana','Dream Straits 1509', 100, 0, '', 'clean'],
+    ['2026-05-19','Jocy','Dream Straits 1509', 20, 0, '', 'inspect'],
+    ['2026-05-19','Katya Abdymazhitova','Dream Winthrop 312', 75, 0, '', 'clean'],
+    ['2026-05-19','Jocy','Dream Winthrop 312', 20, 0, '', 'inspect'],
+    ['2026-05-19','Elizabeth','Noble George 2', 75, 0, '', 'clean'],
+    ['2026-05-19','Jocy','Noble George 2', 20, 0, '', 'inspect'],
+    ['2026-05-19','Elizabeth','Thomas George', 60, 0, '', 'clean'],
+    ['2026-05-19','Jocy','Thomas George', 20, 0, '', 'inspect'],
+    ['2026-05-19','Natallia','Dream Washington Apt 3', 120, -10, '', 'clean'],
+    ['2026-05-20','Anna Maciata','Dream Polk 204', 90, 90, 'deep clean', 'clean'],
+    ['2026-05-20','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-05-20','Claudia','Dream Ohio', 90, 0, 'u2', 'clean'],
+    ['2026-05-20','Cory','Dream Patterson', 140, 0, '4w', 'clean'],
+    ['2026-05-20','Sabrina','Dream Claremont Ground', 70, 0, '', 'clean'],
+    ['2026-05-20','Jocy','Dream Claremont Ground', 20, 0, '', 'inspect'],
+    ['2026-05-20','Lexie','Dream Grand 203', 70, 0, '', 'clean'],
+    ['2026-05-20','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-20','Luana','Dream Michigan', 100, 0, '', 'clean'],
+    ['2026-05-20','Jocy','Dream Michigan', 20, 0, '', 'inspect'],
+    ['2026-05-20','Luana','Dream Straits 1309', 100, 0, '', 'clean'],
+    ['2026-05-20','Jocy','Dream Straits 1309', 20, 0, '', 'inspect'],
+    ['2026-05-20','Katya Abdymazhitova','Dream Winthrop 507', 75, 0, '', 'clean'],
+    ['2026-05-20','Jocy','Dream Winthrop 507', 20, 0, '', 'inspect'],
+    ['2026-05-20','Iona','Noble George 3', 65, 0, '', 'clean'],
+    ['2026-05-20','Jocy','Noble George 3', 20, 0, '', 'inspect'],
+    ['2026-05-20','Ivanna','Dream Washington House', 200, 200, 'Quarterly Deep Clean', 'clean'],
+    ['2026-05-20','Natallia','Dream Fairfield', 240, -10, '', 'clean'],
+    ['2026-05-21','Claudia','Dream 17th Pilsen', 110, 0, '', 'clean'],
+    ['2026-05-21','Claudia','Dream 18th Pilsen', 85, 0, '1b', 'clean'],
+    ['2026-05-21','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-21','Claudia','Village Inn', 130, 0, '', 'clean'],
+    ['2026-05-21','Cory','Dream Nevele 708', 106, 0, '', 'clean'],
+    ['2026-05-21','Cory','Dwellish Wilton', 130, 0, '', 'clean'],
+    ['2026-05-21','Cory','Lee Reta', 125, 0, '', 'clean'],
+    ['2026-05-21','Elizabeth','Dream Claremont 1', 85, 85, 'deep clean', 'clean'],
+    ['2026-05-21','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-05-21','Iona','Dream Grand 403', 70, 0, '', 'clean'],
+    ['2026-05-21','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-05-21','Lexie','Dwellish Drexel', 130, 0, '', 'clean'],
+    ['2026-05-21','Jocy','Dwellish Drexel', 30, 0, '', 'inspect'],
+    ['2026-05-21','Ivanna','Dream Paulina', 70, 0, '', 'clean'],
+    ['2026-05-21','Natallia','Dream Bell', 240, 230, 'Quarterly Deep Clean', 'clean'],
+    ['2026-05-21','Natallia','Dream Washington Apt 2', 120, 110, '', 'clean'],
+    ['2026-05-21','Tammy','Dream Nekoosa', 300, 0, '', 'clean'],
+    ['2026-05-21','Antonina Wiszniewski','Dream Bingham', 200, 200, 'deep clean', 'clean'],
+    ['2026-05-21','Wendy','Dream Houston 2109', 140, 0, '', 'clean'],
+    ['2026-05-22','Anna Maciata','Dream Polk 201', 90, 0, '', 'clean'],
+    ['2026-05-22','Beatriz','Dream Largo', 200, 0, '', 'clean'],
+    ['2026-05-22','Brechelle','Dream Spearfish', 290, 0, '', 'clean'],
+    ['2026-05-22','Claudia','Dream Ohio', 90, 0, 'u1', 'clean'],
+    ['2026-05-22','Claudia','Dream Ohio', 90, 0, 'u2', 'clean'],
+    ['2026-05-22','Claudia','Dwellish Ohio', 140, 0, '', 'clean'],
+    ['2026-05-22','Claudia','Dwellish Warner', 95, 0, '', 'clean'],
+    ['2026-05-22','Cory','Dwellish Erie', 130, 0, '', 'clean'],
+    ['2026-05-22','Sabrina','Augusta 1E', 100, 0, '', 'clean'],
+    ['2026-05-22','Jocy','Augusta 1E', 20, 0, '', 'inspect'],
+    ['2026-05-22','Elizabeth','Dream Claremont 2', 85, 0, '', 'clean'],
+    ['2026-05-22','Jocy','Dream Claremont 2', 20, 0, '', 'inspect'],
+    ['2026-05-22','Iona','Dream Grand 203', 70, 0, '', 'clean'],
+    ['2026-05-22','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-22','Luana','Dream Straits 1409', 100, 0, '', 'clean'],
+    ['2026-05-22','Jocy','Dream Straits 1409', 20, 0, '', 'inspect'],
+    ['2026-05-22','Katya Abdymazhitova','Dream Winthrop 311', 75, 0, '', 'clean'],
+    ['2026-05-22','Jocy','Dream Winthrop 311', 20, 0, '', 'inspect'],
+    ['2026-05-22','Katya Abdymazhitova','Dream Winthrop 312', 75, 0, '', 'clean'],
+    ['2026-05-22','Jocy','Dream Winthrop 312', 20, 0, '', 'inspect'],
+    ['2026-05-22','Katya Abdymazhitova','Dream Winthrop 411', 75, 0, '', 'clean'],
+    ['2026-05-22','Jocy','Dream Winthrop 411', 20, 0, '', 'inspect'],
+    ['2026-05-22','Luana','Noble Fry 2S', 90, 0, '', 'clean'],
+    ['2026-05-22','Jocy','Noble Fry 2S', 10, 0, '', 'inspect'],
+    ['2026-05-22','Lexie','Thomas Fry', 60, 0, '2f', 'clean'],
+    ['2026-05-22','Jocy','Thomas Fry', 20, 0, '2f', 'inspect'],
+    ['2026-05-22','Natallia','Dream Race', 220, -10, '', 'clean'],
+    ['2026-05-22','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-05-22','Jocy','-', 30, 0, 'support', 'misc'],
+    ['2026-05-22','Jocy','-', 65, 0, 'misc', 'misc'],
+    ['2026-05-22','Cory','-', 22.03, 0, 'supplies', 'misc'],
+    ['2026-05-22','Cory','-', 45, 0, 'Laundry at Deep', 'misc'],
+    ['2026-05-22','Elizabeth','-', 25, 0, 'Laundry home Deep Clean', 'misc'],
+    ['2026-05-23','Wendy','Dream Houston 2109', 140, 0, '', 'clean'],
+    ['2026-05-23','Anna Maciata','Dream Polk 202', 90, 0, '', 'clean'],
+    ['2026-05-23','Caridad','Dream Front Street', 210, 0, '', 'clean'],
+    ['2026-05-23','Claudia','Dream 18th Pilsen', 85, 0, '1b', 'clean'],
+    ['2026-05-23','Claudia','Dream Huron', 120, -10, '', 'clean'],
+    ['2026-05-23','Claudia','Dream Willard', 120, 0, '', 'clean'],
+    ['2026-05-23','Sabrina','Augusta 1W', 100, 0, '', 'clean'],
+    ['2026-05-23','Iona','Dream Grand 204', 70, 0, '', 'clean'],
+    ['2026-05-23','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-05-23','Luana','Dream Michigan', 100, 0, '', 'clean'],
+    ['2026-05-23','Jocy','Dream Michigan', 20, 0, '', 'inspect'],
+    ['2026-05-23','Camila','Dwellish Southport', 95, 0, '', 'clean'],
+    ['2026-05-23','Jocy','Dwellish Southport', 25, 0, '', 'inspect'],
+    ['2026-05-23','Natallia','Dream Washington Apt 4', 120, -10, '', 'clean'],
+    ['2026-05-24','Antonina Wiszniewski','Dream Bingham', 200, 0, '', 'clean'],
+    ['2026-05-24','Beatriz','Dream Largo', 200, 0, '', 'clean'],
+    ['2026-05-24','Claudia','Dream Ohio', 90, -10, 'u2', 'clean'],
+    ['2026-05-24','Claudia','Dwellish Ohio', 140, -10, '', 'clean'],
+    ['2026-05-24','Luana','Dream Straits 1509', 100, 0, '', 'clean'],
+    ['2026-05-24','Jocy','Dream Straits 1509', 20, 0, '', 'inspect'],
+    ['2026-05-24','Katya Abdymazhitova','Dream Winthrop 506', 75, 0, '', 'clean'],
+    ['2026-05-24','Jocy','Dream Winthrop 506', 20, 0, '', 'inspect'],
+    ['2026-05-24','Lexie','Dwellish Drexel', 130, 0, '', 'clean'],
+    ['2026-05-24','Jocy','Dwellish Drexel', 30, 0, '', 'inspect'],
+    ['2026-05-24','Elizabeth','Noble George 3', 65, 0, '', 'clean'],
+    ['2026-05-24','Iona','Thomas George', 65, 0, '', 'clean'],
+    ['2026-05-24','Jocy','Thomas George', 20, 0, '', 'inspect'],
+    ['2026-05-24','Ivanna','Dream Paulina', 70, 0, '', 'clean'],
+    ['2026-05-24','Natallia','Dream Fairfield', 240, -10, '', 'clean'],
+    ['2026-05-24','Natallia','Dream Race', 220, -10, '', 'clean'],
+    ['2026-05-25','Wendy','Dream Houston 2103', 140, 0, '', 'clean'],
+    ['2026-05-25','Wendy','Dream Houston 2107', 140, 0, '', 'clean'],
+    ['2026-05-25','Ivanna','Dream Polk 201', 90, 0, '', 'clean'],
+    ['2026-05-25','Ivanna','Dream Polk 203', 90, 0, '', 'clean'],
+    ['2026-05-25','Brechelle','Dream Spearfish', 290, 0, '', 'clean'],
+    ['2026-05-25','Claudia','Dream Beach', 200, -10, '', 'clean'],
+    ['2026-05-25','Claudia','Dream Willard', 120, -10, '', 'clean'],
+    ['2026-05-25','Claudia','Dwellish Hermitage', 80, -10, '', 'clean'],
+    ['2026-05-25','Claudia','Dwellish Warner', 95, 0, '', 'clean'],
+    ['2026-05-25','Claudia','Village Inn', 130, 0, '', 'clean'],
+    ['2026-05-25','Coree','Dream Montana', 300, 0, '', 'clean'],
+    ['2026-05-25','Cory','Dream Throop', 270, 0, '', 'clean'],
+    ['2026-05-25','Cory','Dwellish Erie', 130, 0, '', 'clean'],
+    ['2026-05-25','Cory','Dwellish Wilton', 130, 0, '', 'clean'],
+    ['2026-05-25','Cory','Thomas Andersonville', 224, 0, '', 'clean'],
+    ['2026-05-25','Sabrina','Dream Claremont 1', 85, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-05-25','Elizabeth','Dream Claremont 2', 85, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dream Claremont 2', 20, 0, '', 'inspect'],
+    ['2026-05-25','Sabrina','Dream Claremont Ground', 70, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dream Claremont Ground', 20, 0, '', 'inspect'],
+    ['2026-05-25','Iona','Dream Grand 203', 70, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-25','Iona','Dream Grand 403', 70, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-05-25','Luana','Dream Polk 102', 80, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dream Polk 102', 20, 0, '', 'inspect'],
+    ['2026-05-25','Luana','Dream Straits 1409', 100, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dream Straits 1409', 20, 0, '', 'inspect'],
+    ['2026-05-25','Katya Abdymazhitova','Dream Winthrop 411', 75, 75, 'deep cleaning', 'clean'],
+    ['2026-05-25','Jocy','Dream Winthrop 411', 20, 0, '', 'inspect'],
+    ['2026-05-25','Katya Abdymazhitova','Dream Winthrop 412', 75, 75, 'deep cleaning', 'clean'],
+    ['2026-05-25','Jocy','Dream Winthrop 412', 20, 0, '', 'inspect'],
+    ['2026-05-25','Katya Abdymazhitova','Dream Winthrop 507', 75, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dream Winthrop 507', 20, 0, '', 'inspect'],
+    ['2026-05-25','Camila','Dwellish Southport', 95, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Dwellish Southport', 25, 0, '', 'inspect'],
+    ['2026-05-25','Lexie','Jorge Old Chicago', 90, 0, '', 'clean'],
+    ['2026-05-25','Jocy','Jorge Old Chicago', 20, 0, '', 'inspect'],
+    ['2026-05-25','Sabrina','Thomas Fry', 60, 0, '2f', 'clean'],
+    ['2026-05-25','Natallia','Dream Washington Apt 4', 120, -10, '', 'clean'],
+    ['2026-05-25','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-05-25','Natallia','Dream Washington Apt 2', 120, -10, '', 'clean'],
+    ['2026-05-25','Natallia','Dream Washington Apt 3', 120, -10, '', 'clean'],
+    ['2026-05-26','Tammy','Dream Nekoosa', 300, 0, '', 'clean'],
+    ['2026-05-26','Wendy','Dream Houston 2109', 140, 0, '', 'clean'],
+    ['2026-05-26','Anna Maciata','Dream Polk 202', 90, 0, '', 'clean'],
+    ['2026-05-26','Anna Maciata','Dream Polk 204', 90, 0, '', 'clean'],
+    ['2026-05-26','Claudia','Dream Huron', 120, 0, '', 'clean'],
+    ['2026-05-26','Claudia','Dream Ohio', 90, 70, 'u1 - deep clean', 'clean'],
+    ['2026-05-26','Cory','Dream Magnolia', 150, 0, '', 'clean'],
+    ['2026-05-26','Cory','Dream Nevele 708', 106, 0, '', 'clean'],
+    ['2026-05-26','Camila','Angela Home', 115, 0, '', 'clean'],
+    ['2026-05-26','Jocy','Angela Home', 15, 0, '', 'inspect'],
+    ['2026-05-26','Sabrina','Augusta 1E', 100, 100, 'deep clean', 'clean'],
+    ['2026-05-26','Sabrina','Augusta 1W', 100, 0, '', 'clean'],
+    ['2026-05-26','Lexie','Dream Grand 204', 70, 0, '', 'clean'],
+    ['2026-05-26','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-05-26','Luana','Dream Straits 1309', 100, 0, '', 'clean'],
+    ['2026-05-26','Jocy','Dream Straits 1309', 20, 0, '', 'inspect'],
+    ['2026-05-26','Katya Abdymazhitova','Dream Winthrop 312', 75, 0, '', 'clean'],
+    ['2026-05-26','Jocy','Dream Winthrop 312', 20, 0, '', 'inspect'],
+    ['2026-05-26','Elizabeth','Noble George 2', 75, 0, '', 'clean'],
+    ['2026-05-26','Jocy','Noble George 2', 20, 0, '', 'inspect'],
+    ['2026-05-26','Camila','Thomas Forest Park', 90, 0, '', 'clean'],
+    ['2026-05-26','Jocy','Thomas Forest Park', 10, 0, '', 'inspect'],
+    ['2026-05-26','Ivanna','Dream Paulina', 70, 0, '', 'clean'],
+    ['2026-05-26','Ivanna','Dream Washington House', 200, 0, '', 'clean'],
+    ['2026-05-27','Caridad','Dream Front Street', 210, 0, '', 'clean'],
+    ['2026-05-27','Claudia','Dream 18th Pilsen', 85, 65, '1a', 'clean'],
+    ['2026-05-27','Claudia','Dream 18th Pilsen', 85, -10, '1b', 'clean'],
+    ['2026-05-27','Camila','Angela Home', 115, 0, '', 'clean'],
+    ['2026-05-27','Jocy','Angela Home', 15, 0, '', 'inspect'],
+    ['2026-05-27','Sabrina','Dream Claremont 2', 85, 0, '', 'clean'],
+    ['2026-05-27','Jocy','Dream Claremont 2', 20, 0, '', 'inspect'],
+    ['2026-05-27','Katya Abdymazhitova','Dream Winthrop 311', 75, 75, 'deep cleaning', 'clean'],
+    ['2026-05-27','Jocy','Dream Winthrop 311', 20, 0, '', 'inspect'],
+    ['2026-05-27','Camila','Dwellish Southport', 95, 0, '', 'clean'],
+    ['2026-05-27','Jocy','Dwellish Southport', 25, 0, '', 'inspect'],
+    ['2026-05-28','Tammy','Dream Nekoosa', 300, 0, '', 'clean'],
+    ['2026-05-28','Wendy','Dream Houston 2105', 140, 0, '', 'clean'],
+    ['2026-05-28','Anna Maciata','Dream Polk 201', 90, 0, '', 'clean'],
+    ['2026-05-28','Claudia','Dream Huron', 120, -10, '', 'clean'],
+    ['2026-05-28','Claudia','Dream Ohio', 90, -10, 'u1', 'clean'],
+    ['2026-05-28','Elizabeth','Dream Claremont 1', 85, 0, '', 'clean'],
+    ['2026-05-28','Jocy','Dream Claremont 1', 20, 0, '', 'inspect'],
+    ['2026-05-28','Iona','Dream Grand 203', 70, 70, 'deep clean', 'clean'],
+    ['2026-05-28','Jocy','Dream Grand 203', 20, 0, '', 'inspect'],
+    ['2026-05-28','Sabrina','Dream Michigan', 100, 100, 'deep clean', 'clean'],
+    ['2026-05-28','Jocy','Dream Michigan', 20, 0, '', 'inspect'],
+    ['2026-05-28','Katya Abdymazhitova','Dream Winthrop 506', 75, 0, '', 'clean'],
+    ['2026-05-28','Jocy','Dream Winthrop 506', 20, 0, '', 'inspect'],
+    ['2026-05-28','Ivanna','Dream Paulina', 70, 0, '', 'clean'],
+    ['2026-05-28','Natallia','Dream Washington Apt 4', 120, -10, '', 'clean'],
+    ['2026-05-28','Natallia','Dream Washington Apt 1', 120, -10, '', 'clean'],
+    ['2026-05-28','Natallia','Dream Washington Apt 2', 120, -10, '', 'clean'],
+    ['2026-05-28','Natallia','Dream Washington Apt 3', 120, -10, '', 'clean'],
+    ['2026-05-29','Antonina Wiszniewski','Dream Bingham', 200, 0, '', 'clean'],
+    ['2026-05-29','Wendy','Dream Houston 2109', 140, 0, '', 'clean'],
+    ['2026-05-29','Beatriz','Dream Largo', 200, 0, '', 'clean'],
+    ['2026-05-29','Brechelle','Dream Spearfish', 290, 0, '', 'clean'],
+    ['2026-05-29','Claudia','Dream 17th Pilsen', 110, 0, '', 'clean'],
+    ['2026-05-29','Claudia','Dwellish Ohio', 140, 0, '', 'clean'],
+    ['2026-05-29','Cory','Dream Throop', 270, 0, '', 'clean'],
+    ['2026-05-29','Cory','Dwellish Erie', 130, 0, '', 'clean'],
+    ['2026-05-29','Lexie','2018 21st Jack', 100, 0, '', 'clean'],
+    ['2026-05-29','Camila','Dream Claremont Ground', 70, 0, '', 'clean'],
+    ['2026-05-29','Jocy','Dream Claremont Ground', 20, 0, '', 'inspect'],
+    ['2026-05-29','Imelda','Dream Grand 204', 70, 0, '', 'clean'],
+    ['2026-05-29','Jocy','Dream Grand 204', 20, 0, '', 'inspect'],
+    ['2026-05-29','Imelda','Dream Grand 403', 70, 0, '', 'clean'],
+    ['2026-05-29','Jocy','Dream Grand 403', 20, 0, '', 'inspect'],
+    ['2026-05-29','Luana','Dream Straits 1409', 100, 0, '', 'clean'],
+    ['2026-05-29','Jocy','Dream Straits 1409', 20, 0, '', 'inspect'],
+    ['2026-05-29','Luana','Dream Straits 1509', 100, 0, '', 'clean'],
+    ['2026-05-29','Jocy','Dream Straits 1509', 20, 0, '', 'inspect'],
+    ['2026-05-29','Katya Abdymazhitova','Dream Winthrop 312', 75, 0, '', 'clean'],
+    ['2026-05-29','Jocy','Dream Winthrop 312', 20, 0, '', 'inspect'],
+    ['2026-05-29','Katya Abdymazhitova','Dream Winthrop 507', 75, 0, '', 'clean'],
+    ['2026-05-29','Jocy','Dream Winthrop 507', 20, 0, '', 'inspect'],
+    ['2026-05-29','Iona','Thomas George', 65, 0, '', 'clean'],
+    ['2026-05-29','Jocy','Thomas George', 20, 0, '', 'inspect'],
+    ['2026-05-29','Jocy','-', 120, 0, 'units', 'misc'],
+    ['2026-05-29','Jocy','-', 30, 0, 'slack', 'misc'],
+    ['2026-05-29','Claudia','-', 43.71, 0, 'supplies', 'misc'],
+    ['2026-05-29','Tammy','-', 148.74, 0, '', 'misc'],
+    ['2026-05-29','Brechelle','-', 10.39, 0, 'supplies', 'misc'],
+  ];
+
+  let idCounter = Date.now();
+  const newEntries = [];
+  raw.forEach(([date, cleaner, property, rate, additionalRate, notes, type]) => {
+    const key = `${date}|${cleaner}|${property}|${rate}|${notes}`;
+    if (existing.has(key)) return;
+    const entry = { id: idCounter++, date, cleaner, property, type, rate, additionalRate, notes };
+    db.entries.push(entry);
+    newEntries.push(entry);
+    existing.add(key);
+  });
+  if (newEntries.length > 0) {
+    // Batch upsert to Supabase in chunks of 200
+    const chunkSize = 200;
+    for (let i = 0; i < newEntries.length; i += chunkSize) {
+      const chunk = newEntries.slice(i, i + chunkSize);
+      await sbUpsert('entries', chunk.map(e => ({
+        id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
+        type: e.type, rate: e.rate, additional_rate: e.additionalRate || 0,
+        notes: e.notes || '', is_manual: false, added_by: null, rate_override: null
+      })));
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const session = loadSession();
+  if (session) {
+    activateApp(session.user, session.role);
+  } else {
+    document.getElementById('login-pass').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  }
+  setTimeout(applySearchableDropdowns, 100);
+});
+// ==========================================
+// SEARCHABLE DROPDOWNS
+// ==========================================
+function makeSearchable(sel) {
+  if (!sel || sel.dataset.searchable) return;
+  sel.dataset.searchable = '1';
+  sel.style.display = 'none';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'sd-wrap';
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(sel);
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'sd-input';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+
+  const arrow = document.createElement('span');
+  arrow.className = 'sd-arrow';
+  arrow.textContent = '▾';
+
+  const list = document.createElement('div');
+  list.className = 'sd-list';
+
+  wrap.insertBefore(input, sel);
+  wrap.insertBefore(arrow, sel);
+  wrap.appendChild(list);
+
+  function getOptions() {
+    return Array.from(sel.options);
+  }
+
+  function renderList(filter) {
+    list.innerHTML = '';
+    const q = (filter || '').toLowerCase();
+    let count = 0;
+    getOptions().forEach(opt => {
+      const text = opt.text;
+      const val = opt.value;
+      if (q && !text.toLowerCase().includes(q)) return;
+      const div = document.createElement('div');
+      div.className = 'sd-item' + (val === '' ? ' placeholder' : '');
+      div.textContent = text;
+      div.dataset.value = val;
+      if (val === sel.value) div.classList.add('active');
+      div.addEventListener('mousedown', e => {
+        e.preventDefault();
+        sel.value = val;
+        input.value = val === '' ? '' : text;
+        list.classList.remove('open');
+        // Trigger any onchange on the original select
+        sel.dispatchEvent(new Event('change', {bubbles: true}));
+      });
+      list.appendChild(div);
+      count++;
+    });
+    if (count === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'sd-empty';
+      empty.textContent = 'No matches';
+      list.appendChild(empty);
+    }
+  }
+
+  function syncDisplay() {
+    const selected = sel.options[sel.selectedIndex];
+    input.value = selected && selected.value !== '' ? selected.text : '';
+    input.placeholder = selected && selected.value === '' ? selected.text : '— Select —';
+  }
+
+  input.addEventListener('focus', () => {
+    renderList('');
+    list.classList.add('open');
+    input.select();
+  });
+
+  input.addEventListener('input', () => {
+    renderList(input.value);
+    list.classList.add('open');
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      list.classList.remove('open');
+      syncDisplay(); // revert display to current selection if user typed but didn't pick
+    }, 150);
+  });
+
+  input.addEventListener('keydown', e => {
+    const items = list.querySelectorAll('.sd-item');
+    const active = list.querySelector('.sd-item.active');
+    let idx = Array.from(items).indexOf(active);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      idx = Math.min(idx + 1, items.length - 1);
+      items.forEach(i => i.classList.remove('active'));
+      if (items[idx]) { items[idx].classList.add('active'); items[idx].scrollIntoView({block:'nearest'}); }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      idx = Math.max(idx - 1, 0);
+      items.forEach(i => i.classList.remove('active'));
+      if (items[idx]) { items[idx].classList.add('active'); items[idx].scrollIntoView({block:'nearest'}); }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const cur = list.querySelector('.sd-item.active');
+      if (cur) cur.dispatchEvent(new MouseEvent('mousedown'));
+    } else if (e.key === 'Escape') {
+      list.classList.remove('open');
+      syncDisplay();
+    }
+  });
+
+  // Watch for external changes to the select (e.g. when options are repopulated)
+  const observer = new MutationObserver(() => syncDisplay());
+  observer.observe(sel, {childList: true, attributes: true, attributeFilter: ['value']});
+
+  syncDisplay();
+}
+
+function applySearchableDropdowns() {
+  // Skip login dropdown and billing group (small fixed list is fine to search too)
+  document.querySelectorAll('select:not([data-searchable])').forEach(sel => {
+    // Skip if it only has 0-1 options (not yet populated) — will be called again after population
+    if (sel.options.length > 0) makeSearchable(sel);
+  });
+}
+// ==========================================
+// MESSAGES / CHAT (Supabase Realtime)
+// ==========================================
+let chatPollTimer = null;
+let lastMsgCount = 0;
+let realtimeChannel = null;
+
+function chatSeenKey() { return 'drs_chat_seen_' + (currentUser || ''); }
+
+function markChatSeen() {
+  const msgs = loadMessages();
+  if (msgs.length === 0) return;
+  localStorage.setItem(chatSeenKey(), msgs[msgs.length - 1].id);
+  updateChatBadge();
+}
+
+function getUnseenCount() {
+  const msgs = loadMessages();
+  if (!msgs.length) return 0;
+  const lastSeen = parseInt(localStorage.getItem(chatSeenKey()) || '0');
+  return msgs.filter(m => m.sender !== currentUser && m.id > lastSeen).length;
+}
+
+function updateChatBadge() {
+  const btn = document.getElementById('navbtn-messages');
+  if (!btn) return;
+  const count = getUnseenCount();
+  const existing = btn.querySelector('.chat-badge');
+  if (count > 0) {
+    if (existing) { existing.textContent = count > 99 ? '99+' : count; }
+    else {
+      const badge = document.createElement('span');
+      badge.className = 'chat-badge';
+      badge.textContent = count > 99 ? '99+' : count;
+      btn.appendChild(badge);
+    }
+  } else {
+    if (existing) existing.remove();
+  }
+}
+
+function loadMessages() { return db.messages || []; }
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  input.value = '';
+  const msg = { id: Date.now(), sender: currentUser, text, ts: new Date().toISOString() };
+  // Optimistic update
+  db.messages = [...loadMessages(), msg];
+  renderChat();
+  markChatSeen();
+  // Save to Supabase
+  await sbInsert('messages', msg);
+}
+
+function fmtChatTime(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  if (isToday) return time;
+  return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' · ' + time;
+}
+
+function renderChat() {
+  const msgs = loadMessages();
+  lastMsgCount = msgs.length;
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+
+  if (msgs.length === 0) {
+    container.innerHTML = `<div style="margin:auto;text-align:center;color:var(--text-muted);">
+      <div style="font-size:36px;margin-bottom:12px;">💬</div>
+      <div>No messages yet. Say hello!</div>
+    </div>`;
+    return;
+  }
+
+  // Group consecutive messages from same sender
+  const groups = [];
+  msgs.forEach(m => {
+    const last = groups[groups.length - 1];
+    if (last && last.from === m.sender) {
+      last.messages.push(m);
+    } else {
+      groups.push({ from: m.sender, messages: [m] });
+    }
+  });
+
+  container.innerHTML = groups.map(g => {
+    const isMe = g.from === currentUser;
+    const side = isMe ? 'me' : 'them';
+    const bubbles = g.messages.map((m, i) => `
+      <div class="chat-bubble ${side}">${(m.text||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      ${i === g.messages.length - 1 ? `<div class="chat-meta ${side}">${fmtChatTime(m.ts)}</div>` : ''}
+    `).join('');
+    return `<div class="chat-group ${side}">
+      ${!isMe ? `<div class="chat-sender">${g.from}</div>` : ''}
+      ${bubbles}
+    </div>`;
+  }).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+async function loadChatFromSupabase() {
+  const rows = await sbGet('messages', 'order=id.asc');
+  db.messages = rows;
+  renderChat();
+  updateChatBadge();
+}
+
+function startChatRealtime() {
+  // Use Supabase Realtime via polling (pure REST, no WebSocket dependency)
+  startChatPolling();
+}
+
+function startChatPolling() {
+  stopChatPolling();
+  chatPollTimer = setInterval(async () => {
+    const rows = await sbGet('messages', 'order=id.asc');
+    if (rows.length !== lastMsgCount) {
+      db.messages = rows;
+      const onMessagesPage = document.getElementById('page-messages')?.classList.contains('active');
+      if (onMessagesPage) { renderChat(); markChatSeen(); }
+      else updateChatBadge();
+    }
+  }, 3000);
+}
+
+function stopChatPolling() {
+  if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+}
+</script>
+</body>
+</html>
