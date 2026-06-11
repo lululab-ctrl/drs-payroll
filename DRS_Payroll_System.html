@@ -405,7 +405,6 @@
 <div id="page-dashboard" class="page active">
   <div class="section-title">Overview</div>
   <div class="section-sub">Dream Rental Solutions — Invoice & Payroll System</div>
-  <div id="db-status-banner" style="display:none;margin-bottom:16px;padding:12px 16px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;"></div>
   <div class="stats-row" id="dashboard-stats"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
     <div class="card">
@@ -801,17 +800,12 @@ async function sbGet(table, params = '') {
   return r.json();
 }
 async function sbUpsert(table, rows) {
-  const body = Array.isArray(rows) ? rows : [rows];
-  if (body.length === 0) return true;
   const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
     method: 'POST',
-    headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify(body)
+    headers: { ...SB_HDR, 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(Array.isArray(rows) ? rows : [rows])
   });
-  if (!r.ok) {
-    const err = await r.text();
-    console.error('sbUpsert error on', table, ':', err);
-  }
+  if (!r.ok) console.error('sbUpsert', table, await r.text());
   return r.ok;
 }
 async function sbDelete(table, filter) {
@@ -891,7 +885,6 @@ async function sbDeleteBillingRate(property) {
 // ---- Load all data from Supabase ----
 async function loadFromSupabase() {
   showLoadingOverlay(true);
-  setDbStatus('', '');
   try {
     const [entries, employees, billingRates, billingMiscRows] = await Promise.all([
       sbGet('entries', 'order=date.asc'),
@@ -901,19 +894,22 @@ async function loadFromSupabase() {
     ]);
 
     db.entries = entries.map(e => ({
-      id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
-      type: e.type, rate: e.rate, additionalRate: e.additional_rate || 0,
-      notes: e.notes || '', isManual: e.is_manual || false,
-      addedBy: e.added_by || null, rateOverride: e.rate_override ?? undefined
+      id: e.id,
+      date: e.date,
+      cleaner: e.cleaner,
+      property: e.property,
+      type: e.type,
+      rate: e.rate,
+      additionalRate: e.additional_rate || 0,
+      notes: e.notes || '',
+      isManual: e.is_manual || false,
+      addedBy: e.added_by || null,
+      rateOverride: e.rate_override ?? undefined
     }));
 
     // Seed entries if the table is empty
     if (entries.length === 0) {
-      setDbStatus('⏳ Seeding data to Supabase — please wait…', 'info');
       await seedAllEntries();
-      setDbStatus(`✅ ${db.entries.length} entries seeded successfully!`, 'success');
-    } else {
-      setDbStatus(`✅ Connected — ${db.entries.length} entries loaded from Supabase.`, 'success');
     }
 
     // If no employees in Supabase yet, seed from defaults then upload
@@ -936,23 +932,14 @@ async function loadFromSupabase() {
     db.billingMisc = {};
     billingMiscRows.forEach(row => { db.billingMisc[row.key] = row.data || []; });
 
+    // Seed entries if empty
+    seedAllEntries();
+
   } catch(e) {
     console.error('Supabase load failed:', e);
-    setDbStatus('❌ Could not connect to Supabase: ' + e.message, 'error');
-    showToast('⚠️ Could not connect to database.', 'error');
+    showToast('⚠️ Could not connect to database. Working offline.', 'error');
   }
   showLoadingOverlay(false);
-}
-
-function setDbStatus(msg, type) {
-  const el = document.getElementById('db-status-banner');
-  if (!el) return;
-  if (!msg) { el.style.display = 'none'; return; }
-  el.style.display = 'block';
-  el.style.background = type === 'error' ? 'rgba(192,57,43,.15)' : type === 'info' ? 'rgba(144,224,239,.1)' : 'rgba(46,204,113,.1)';
-  el.style.border = `1px solid ${type === 'error' ? '#c0392b' : type === 'info' ? 'var(--accent)' : '#2ecc71'}`;
-  el.style.color = type === 'error' ? '#e74c3c' : type === 'info' ? 'var(--accent)' : '#2ecc71';
-  el.textContent = msg;
 }
 
 function showLoadingOverlay(show) {
