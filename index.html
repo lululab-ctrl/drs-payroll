@@ -1844,7 +1844,7 @@ function renderSummary() {
           <td>${e.property}</td>
           <td>${typeBadge(e.type)}</td>
           <td class="green">${fmt(e.rate)}</td>
-          <td class="mono" style="color:var(--accent2)">${addl > 0 ? fmt(addl) : '—'}</td>
+          <td class="mono" style="color:var(--accent2)">${addl !== 0 ? fmt(addl) : '—'}</td>
           <td class="muted">${e.notes||''}</td>
           ${deleteBtn}
         </tr>`;
@@ -1995,7 +1995,7 @@ function renderPayroll() {
             <td>${e.property||'—'}</td>
             <td>${isManual ? '<span class="badge badge-misc">Manual</span>' : typeBadge(e.type)}</td>
             <td class="green">${fmt(displayRate)}</td>
-            <td class="mono" style="color:var(--accent2)">${addl > 0 ? fmt(addl) : '—'}</td>
+            <td class="mono" style="color:var(--accent2)">${addl !== 0 ? fmt(addl) : '—'}</td>
             <td class="green">${fmt(displayRate + addl)}</td>
             <td class="muted">${e.notes||''}</td>
             <td></td>
