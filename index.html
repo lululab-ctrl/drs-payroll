@@ -750,6 +750,13 @@ function doLogout(timedOut = false) {
   clearSession();
   stopActivityTracking();
   stopChatPolling();
+  // Reset tab state for next login
+  Object.keys(tabVisited).forEach(k => delete tabVisited[k]);
+  Object.assign(tabState.summary,  { from:'', to:'', cleaner:'', property:'' });
+  Object.assign(tabState.payroll,  { cleaner:'', from:'', to:'' });
+  Object.assign(tabState.billing,  { from:'', to:'', group:'' });
+  Object.assign(tabState.database, { subTab:'db-employees', empFilter:'', propFilter:'', billingFilter:'' });
+  currentPageId = null;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-shell').style.display = 'none';
   document.getElementById('user-pill').style.display = 'none';
@@ -1668,21 +1675,111 @@ function typeBadge(t) {
 }
 
 // ==========================================
+// TAB STATE — remembers filters/selections per tab for the session
+// ==========================================
+const tabState = {
+  summary:  { from: '', to: '', cleaner: '', property: '' },
+  payroll:  { cleaner: '', from: '', to: '' },
+  billing:  { from: '', to: '', group: '' },
+  database: { subTab: 'db-employees', empFilter: '', propFilter: '', billingFilter: '' },
+};
+const tabVisited = {};  // tracks which tabs have been initialized
+
+function saveTabState(id) {
+  if (id === 'summary') {
+    tabState.summary.from     = document.getElementById('summary-from')?.value || '';
+    tabState.summary.to       = document.getElementById('summary-to')?.value || '';
+    tabState.summary.cleaner  = document.getElementById('summary-cleaner')?.value || '';
+    tabState.summary.property = document.getElementById('summary-property')?.value || '';
+  }
+  if (id === 'payroll') {
+    tabState.payroll.cleaner = document.getElementById('payroll-cleaner')?.value || '';
+    tabState.payroll.from    = document.getElementById('payroll-from')?.value || '';
+    tabState.payroll.to      = document.getElementById('payroll-to')?.value || '';
+  }
+  if (id === 'billing') {
+    tabState.billing.from  = document.getElementById('billing-from')?.value || '';
+    tabState.billing.to    = document.getElementById('billing-to')?.value || '';
+    tabState.billing.group = document.getElementById('billing-group')?.value || '';
+  }
+  if (id === 'database') {
+    tabState.database.empFilter     = document.getElementById('db-emp-filter')?.value || '';
+    tabState.database.propFilter    = document.getElementById('db-prop-filter')?.value || '';
+    tabState.database.billingFilter = document.getElementById('db-billing-filter')?.value || '';
+  }
+}
+
+function restoreTabState(id) {
+  if (id === 'summary') {
+    if (tabState.summary.from)     document.getElementById('summary-from').value     = tabState.summary.from;
+    if (tabState.summary.to)       document.getElementById('summary-to').value       = tabState.summary.to;
+    if (tabState.summary.cleaner)  document.getElementById('summary-cleaner').value  = tabState.summary.cleaner;
+    if (tabState.summary.property) document.getElementById('summary-property').value = tabState.summary.property;
+  }
+  if (id === 'payroll') {
+    if (tabState.payroll.cleaner) document.getElementById('payroll-cleaner').value = tabState.payroll.cleaner;
+    if (tabState.payroll.from)    document.getElementById('payroll-from').value    = tabState.payroll.from;
+    if (tabState.payroll.to)      document.getElementById('payroll-to').value      = tabState.payroll.to;
+  }
+  if (id === 'billing') {
+    if (tabState.billing.from)  document.getElementById('billing-from').value  = tabState.billing.from;
+    if (tabState.billing.to)    document.getElementById('billing-to').value    = tabState.billing.to;
+    if (tabState.billing.group) document.getElementById('billing-group').value = tabState.billing.group;
+  }
+  if (id === 'database') {
+    if (tabState.database.empFilter)     document.getElementById('db-emp-filter').value     = tabState.database.empFilter;
+    if (tabState.database.propFilter)    document.getElementById('db-prop-filter').value    = tabState.database.propFilter;
+    if (tabState.database.billingFilter) document.getElementById('db-billing-filter').value = tabState.database.billingFilter;
+  }
+}
+
+let currentPageId = null;
+
+// ==========================================
 // NAVIGATION
 // ==========================================
 function showPage(id) {
+  // Save state of the page we're leaving
+  if (currentPageId) saveTabState(currentPageId);
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   const nb = document.getElementById('navbtn-' + id);
   if (nb) nb.classList.add('active');
   showReadonlyBanner(id);
-  if (id === 'dashboard') renderDashboard();
-  if (id === 'form') initForm();
-  if (id === 'summary') { initSummaryFilters(); renderSummary(); }
-  if (id === 'payroll') initPayrollFilters();
-  if (id === 'billing') initBillingDates();
-  if (id === 'database') initDatabase();
+
+  const firstVisit = !tabVisited[id];
+  tabVisited[id] = true;
+  currentPageId = id;
+
+  if (id === 'dashboard') {
+    renderDashboard();
+  }
+  if (id === 'form') {
+    // Only reset form on first visit; keep date/cleaner state otherwise
+    if (firstVisit) initForm();
+  }
+  if (id === 'summary') {
+    initSummaryFilters();          // repopulates cleaner dropdown (preserves value)
+    restoreTabState('summary');    // restore filter values
+    renderSummary();
+  }
+  if (id === 'payroll') {
+    initPayrollFilters();          // repopulates cleaner dropdown (preserves value)
+    restoreTabState('payroll');
+    // Re-render with restored cleaner/dates if we have them
+    if (tabState.payroll.cleaner) renderPayroll();
+  }
+  if (id === 'billing') {
+    if (firstVisit) initBillingDates();  // only set default dates on first visit
+    restoreTabState('billing');
+  }
+  if (id === 'database') {
+    initDatabase();
+    restoreTabState('database');
+    renderDbEmployees();
+  }
   if (id === 'messages') { loadChatFromSupabase(); markChatSeen(); startChatPolling(); }
   else stopChatPolling();
 }
@@ -1808,8 +1905,10 @@ function showAlert(id, type, msg) {
 // ==========================================
 function initSummaryFilters() {
   const sel = document.getElementById('summary-cleaner');
+  const prev = sel.value;
   sel.innerHTML = '<option value="">All Cleaners</option>' +
     getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
+  if (prev) sel.value = prev;
   applySearchableDropdowns();
 }
 
@@ -1884,8 +1983,10 @@ function exportSummaryCSV() {
 // ==========================================
 function initPayrollFilters() {
   const sel = document.getElementById('payroll-cleaner');
+  const prev = sel.value;
   sel.innerHTML = '<option value="">— Select Cleaner —</option>' +
     getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
+  if (prev) sel.value = prev;
   applySearchableDropdowns();
 }
 
@@ -1995,7 +2096,7 @@ function renderPayroll() {
             <td>${e.property||'—'}</td>
             <td>${isManual ? '<span class="badge badge-misc">Manual</span>' : typeBadge(e.type)}</td>
             <td class="green">${fmt(displayRate)}</td>
-            <td class="mono" style="color:var(--accent2)">${addl !== 0 ? fmt(addl) : '—'}</td>
+            <td class="mono" style="color:var(--accent2)">${addl > 0 ? fmt(addl) : '—'}</td>
             <td class="green">${fmt(displayRate + addl)}</td>
             <td class="muted">${e.notes||''}</td>
             <td></td>
