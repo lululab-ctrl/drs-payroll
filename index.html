@@ -750,13 +750,25 @@ function doLogout(timedOut = false) {
   clearSession();
   stopActivityTracking();
   stopChatPolling();
-  // Reset tab state for next login
+  // Reset ALL tab state — full fresh slate for next login
   Object.keys(tabVisited).forEach(k => delete tabVisited[k]);
   Object.assign(tabState.summary,  { from:'', to:'', cleaner:'', property:'' });
   Object.assign(tabState.payroll,  { cleaner:'', from:'', to:'' });
   Object.assign(tabState.billing,  { from:'', to:'', group:'' });
   Object.assign(tabState.database, { subTab:'db-employees', empFilter:'', propFilter:'', billingFilter:'' });
   currentPageId = null;
+  // Clear all visible fields so they don't bleed into the next session
+  const safeSet = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const safeHtml = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  safeSet('summary-from', ''); safeSet('summary-to', ''); safeSet('summary-cleaner', ''); safeSet('summary-property', '');
+  safeSet('payroll-cleaner', ''); safeSet('payroll-from', ''); safeSet('payroll-to', '');
+  safeSet('billing-from', ''); safeSet('billing-to', ''); safeSet('billing-group', '');
+  safeSet('db-emp-filter', ''); safeSet('db-prop-filter', ''); safeSet('db-billing-filter', '');
+  safeSet('entry-cleaner', ''); safeSet('rate-override', ''); safeSet('entry-notes', ''); safeSet('entry-date', '');
+  safeHtml('entry-property', '<option value="">— Select Cleaner First —</option>');
+  safeHtml('payroll-report', ''); safeHtml('payroll-staff-panel', ''); safeHtml('billing-report', '');
+  const rd = document.getElementById('rate-display'); if (rd) rd.textContent = '$0.00';
+  const fa = document.getElementById('form-alert'); if (fa) fa.innerHTML = '';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-shell').style.display = 'none';
   document.getElementById('user-pill').style.display = 'none';
@@ -1758,7 +1770,7 @@ function showPage(id) {
   }
   if (id === 'form') {
     // Only reset form on first visit; keep date/cleaner state otherwise
-    if (firstVisit) initForm();
+    initForm();
   }
   if (id === 'summary') {
     initSummaryFilters();          // repopulates cleaner dropdown (preserves value)
@@ -1827,14 +1839,29 @@ function renderDashboard() {
 // ==========================================
 function initForm() {
   const today = new Date().toISOString().slice(0,10);
-  document.getElementById('entry-date').value = today;
+  // Always set today's date if empty
+  const dateEl = document.getElementById('entry-date');
+  if (!dateEl.value) dateEl.value = today;
+
+  // Repopulate cleaner dropdown, preserving current selection
   const cleanerSel = document.getElementById('entry-cleaner');
+  const prevCleaner = cleanerSel.value;
   cleanerSel.innerHTML = '<option value="">— Select Cleaner —</option>' +
     getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
-  document.getElementById('entry-property').innerHTML = '<option value="">— Select Cleaner First —</option>';
-  document.getElementById('rate-display').textContent = '$0.00';
-  document.getElementById('rate-override').value = '';
-  document.getElementById('entry-notes').value = '';
+  if (prevCleaner) cleanerSel.value = prevCleaner;
+
+  // Repopulate property dropdown only if no cleaner is selected (fresh state)
+  if (!prevCleaner) {
+    document.getElementById('entry-property').innerHTML = '<option value="">— Select Cleaner First —</option>';
+    document.getElementById('rate-display').textContent = '$0.00';
+  } else {
+    // Cleaner already chosen — repopulate their properties and preserve selection
+    const prevProp = document.getElementById('entry-property').value;
+    const props = getPropertiesForEmployee(prevCleaner);
+    document.getElementById('entry-property').innerHTML = '<option value="">— Select Property —</option>' +
+      props.map(p => `<option value="${p}">${p}</option>`).join('');
+    if (prevProp) document.getElementById('entry-property').value = prevProp;
+  }
   applySearchableDropdowns();
 }
 
