@@ -489,13 +489,13 @@
   <div class="section-title">Sorted Summary</div>
   <div class="section-sub">All submitted payroll records. Filter by date range or cleaner.</div>
   <div class="filter-row">
-    <div class="form-group"><label>From Date</label><input type="date" id="summary-from"></div>
-    <div class="form-group"><label>To Date</label><input type="date" id="summary-to"></div>
+    <div class="form-group"><label>From Date</label><input type="date" id="summary-from" onchange="saveTabState('summary')"></div>
+    <div class="form-group"><label>To Date</label><input type="date" id="summary-to" onchange="saveTabState('summary')"></div>
     <div class="form-group"><label>Cleaner</label>
-      <select id="summary-cleaner"><option value="">All Cleaners</option></select>
+      <select id="summary-cleaner" onchange="saveTabState('summary')"><option value="">All Cleaners</option></select>
     </div>
     <div class="form-group"><label>Property</label>
-      <input type="text" id="summary-property" placeholder="Filter property...">
+      <input type="text" id="summary-property" placeholder="Filter property..." oninput="saveTabState('summary')">
     </div>
     <button class="btn" onclick="renderSummary()" style="margin-bottom:0">Filter</button>
     <button class="btn btn-secondary" onclick="clearSummaryFilters()" style="margin-bottom:0">Clear</button>
@@ -536,10 +536,10 @@
   <div class="section-title">Billing System</div>
   <div class="section-sub">Generate invoices grouped by property brand. Rates pulled from the billing database.</div>
   <div class="filter-row">
-    <div class="form-group"><label>From Date</label><input type="date" id="billing-from"></div>
-    <div class="form-group"><label>To Date</label><input type="date" id="billing-to"></div>
+    <div class="form-group"><label>From Date</label><input type="date" id="billing-from" onchange="saveTabState('billing')"></div>
+    <div class="form-group"><label>To Date</label><input type="date" id="billing-to" onchange="saveTabState('billing')"></div>
     <div class="form-group"><label>Property Group</label>
-      <select id="billing-group">
+      <select id="billing-group" onchange="saveTabState('billing')">
         <option value="">All Groups</option>
         <option value="Dream">Dream</option>
         <option value="Thomas">Thomas</option>
@@ -1994,6 +1994,7 @@ function getFilteredEntries() {
 }
 
 function renderSummary() {
+  saveTabState('summary');
   const entries = getFilteredEntries();
   const canDel = canEdit('summary');
   const tbody = document.getElementById('summary-body');
@@ -2208,6 +2209,8 @@ function renderPayroll() {
   const name = document.getElementById('payroll-cleaner').value;
   const from = document.getElementById('payroll-from').value;
   const to = document.getElementById('payroll-to').value;
+  // Persist immediately so a refresh (without switching tabs first) keeps these values
+  saveTabState('payroll');
   const container = document.getElementById('payroll-report');
   renderStaffPanel(from, to);
 
@@ -2429,6 +2432,7 @@ function initBillingDates() {
 }
 
 function renderBilling() {
+  saveTabState('billing');
   const from = document.getElementById('billing-from').value;
   const to = document.getElementById('billing-to').value;
   const groupFilter = document.getElementById('billing-group').value;
@@ -2681,6 +2685,7 @@ function initDatabase() {
 }
 
 function renderDbEmployees() {
+  saveTabState('database');
   const empFilter = document.getElementById('db-emp-filter').value;
   const propFilter = document.getElementById('db-prop-filter').value.toLowerCase();
   const rows = db.employees.filter(e => {
@@ -2723,6 +2728,7 @@ async function deleteEmpRate(idx) {
 }
 
 function renderDbBilling() {
+  saveTabState('database');
   const filter = document.getElementById('db-billing-filter').value.toLowerCase();
   const rows = db.billingRates.filter(b => !filter || b.property.toLowerCase().includes(filter));
   const editable = isAdmin();
