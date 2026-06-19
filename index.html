@@ -656,6 +656,7 @@ const USERS = {
 };
 
 const SESSION_KEY = 'drs_session';
+const LAST_PAGE_KEY = 'drs_last_page';
 const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour ms
 let inactivityTimer = null;
 let currentUser = null;
@@ -719,7 +720,14 @@ function activateApp(user, role) {
   document.getElementById('user-pill').style.display = '';
   document.getElementById('logout-btn').style.display = '';
   buildNav();
-  showPage('dashboard');
+  // Restore whichever tab the user was last on (so a page refresh doesn't bounce to Dashboard)
+  let lastPage = 'dashboard';
+  try {
+    const saved = sessionStorage.getItem(LAST_PAGE_KEY);
+    const validPages = ['dashboard','form','summary','payroll','billing','database','messages'];
+    if (saved && validPages.includes(saved)) lastPage = saved;
+  } catch(e) {}
+  showPage(lastPage);
   startActivityTracking();
   // Background poll to keep badge updated on any page
   setInterval(updateChatBadge, 3000);
@@ -748,6 +756,7 @@ function doLogin() {
 function doLogout(timedOut = false) {
   currentUser = null; currentRole = null;
   clearSession();
+  try { sessionStorage.removeItem(LAST_PAGE_KEY); } catch(e) {}
   stopActivityTracking();
   stopChatPolling();
   // Reset ALL tab state — full fresh slate for next login
@@ -1760,6 +1769,9 @@ function showPage(id) {
   const nb = document.getElementById('navbtn-' + id);
   if (nb) nb.classList.add('active');
   showReadonlyBanner(id);
+
+  // Remember this as the active page so a refresh returns here instead of the dashboard
+  try { sessionStorage.setItem(LAST_PAGE_KEY, id); } catch(e) {}
 
   const firstVisit = !tabVisited[id];
   tabVisited[id] = true;
