@@ -867,9 +867,26 @@ const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const SB_HDR  = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
 async function sbGet(table, params = '') {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}&limit=10000`, { headers: SB_HDR });
-  if (!r.ok) { console.error('sbGet', table, await r.text()); return []; }
-  return r.json();
+  // Supabase/PostgREST caps each request at 1000 rows server-side regardless of
+  // any ?limit= we pass. To support unlimited long-term data, page through results
+  // using the Range header until a page comes back with fewer than PAGE_SIZE rows.
+  const PAGE_SIZE = 1000;
+  let allRows = [];
+  let offset = 0;
+  while (true) {
+    const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {
+      headers: { ...SB_HDR, 'Range-Unit': 'items', 'Range': `${offset}-${offset + PAGE_SIZE - 1}` }
+    });
+    if (!r.ok) {
+      console.error('sbGet', table, await r.text());
+      break;
+    }
+    const page = await r.json();
+    allRows = allRows.concat(page);
+    if (page.length < PAGE_SIZE) break; // last page
+    offset += PAGE_SIZE;
+  }
+  return allRows;
 }
 async function sbUpsert(table, rows) {
   const body = Array.isArray(rows) ? rows : [rows];
