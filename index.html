@@ -1950,7 +1950,7 @@ function getFilteredEntries() {
     if (cleaner && e.cleaner !== cleaner) return false;
     if (prop && !e.property.toLowerCase().includes(prop)) return false;
     return true;
-  }).sort((a,b) => b.date.localeCompare(a.date) || a.cleaner.localeCompare(b.cleaner));
+  }).sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id);
 }
 
 function renderSummary() {
