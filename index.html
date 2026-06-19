@@ -720,7 +720,9 @@ let currentRole = null;
 function isAdmin() { return currentRole === 'admin'; }
 function canEdit(tab) {
   if (isAdmin()) return true;
-  return ['dashboard','form','payroll'].includes(tab);
+  // Greg (non-admin) only gets inline-edit/delete rights on Payroll.
+  // Summary, Database, and Billing are admin-only for edits/deletes from here on.
+  return tab === 'payroll';
 }
 
 // ── Session helpers ──
@@ -2104,36 +2106,71 @@ function getFilteredEntries() {
   }).sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id);
 }
 
+// Keeps the Summary tab's table in sync the moment data changes elsewhere
+// (e.g. inline edits made on the Payroll tab), so switching tabs never shows stale data.
+function syncSummaryIfPresent() {
+  if (document.getElementById('summary-body')) renderSummary();
+}
+
+// Keeps the Payroll tab in sync the moment data changes elsewhere (e.g. inline
+// edits made on the Summary tab) — mirrors syncSummaryIfPresent in the other direction.
+function syncPayrollIfPresent() {
+  if (document.getElementById('payroll-report')) renderPayroll();
+}
+
+// Call this after ANY entry add/edit/delete so both tabs always reflect the same data,
+// regardless of which tab the change originated from.
+function syncPayrollAndSummary() {
+  syncSummaryIfPresent();
+  syncPayrollIfPresent();
+}
+
 function renderSummary() {
   saveTabState('summary');
   const entries = getFilteredEntries();
   const canDel = canEdit('summary');
+  const editable = isAdmin();
   const touchedFields = isAdmin() ? getGregTouchedFields() : new Map();
   const tbody = document.getElementById('summary-body');
   tbody.innerHTML = entries.length
     ? entries.map(e => {
         const addl = e.additionalRate || 0;
+        const displayRate = e.rateOverride ?? e.rate;
         const deleteBtn = canDel
           ? `<td class="no-print"><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button></td>`
           : `<td class="no-print"></td>`;
         const rateTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'rate') || wasFieldTouchedByGreg(touchedFields, e.id, 'new');
         const addlTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'additionalRate') || wasFieldTouchedByGreg(touchedFields, e.id, 'new');
         const notesTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'notes');
+        const rateCell = editable
+          ? `<input type="number" class="payroll-inline-input${rateTouched ? ' greg-edit-input' : ''}" value="${displayRate}" step="0.01"
+              onchange="handlePayrollRateOverride(${e.id}, this, ${!!e.isManual})">`
+          : `<span class="${rateTouched ? 'greg-edit-number' : ''}">${fmt(displayRate)}</span>`;
+        const addlCell = editable
+          ? `<input type="number" class="payroll-inline-input${addlTouched ? ' greg-edit-input' : ''}" value="${addl || ''}" step="0.01" placeholder="0.00"
+              onchange="handlePayrollAdditionalRate(${e.id}, this)">`
+          : `<span class="${addlTouched ? 'greg-edit-number' : ''}">${addl !== 0 ? fmt(addl) : '—'}</span>`;
+        const notesCell = editable
+          ? `<textarea class="payroll-notes-input${notesTouched ? ' greg-edit-input' : ''}" onchange="handlePayrollNotes(${e.id}, this)">${e.notes||''}</textarea>`
+          : `<span class="${notesTouched ? 'greg-edit-number' : ''}">${e.notes||''}</span>`;
+        const dateCell = editable
+          ? `<input type="date" class="payroll-inline-input" style="width:120px;" value="${e.date}" onchange="handleSummaryDateChange(${e.id}, this)">`
+          : fmtDate(e.date);
         return `
         <tr>
-          <td>${fmtDate(e.date)}</td>
+          <td>${dateCell}</td>
           <td>${e.cleaner}</td>
           <td>${e.property}</td>
           <td>${typeBadge(e.type)}</td>
-          <td class="green${rateTouched ? ' greg-edit-number' : ''}">${fmt(e.rate)}</td>
-          <td class="mono${addlTouched ? ' greg-edit-number' : ''}" style="${addlTouched ? '' : 'color:var(--accent2)'}">${addl !== 0 ? fmt(addl) : '—'}</td>
-          <td class="muted${notesTouched ? ' greg-edit-number' : ''}">${e.notes||''}</td>
+          <td class="green${editable ? '' : ''}">${rateCell}</td>
+          <td class="mono" style="${addlTouched ? '' : 'color:var(--accent2)'}">${addlCell}</td>
+          <td class="muted">${notesCell}</td>
           ${deleteBtn}
         </tr>`;
       }).join('')
     : '<tr><td colspan="8" class="empty"><div class="empty-icon">📂</div>No records found.</td></tr>';
 
-  const total = entries.reduce((s,e) => s + e.rate + (e.additionalRate||0), 0);
+  const total = entries.reduce((s,e) => s + (e.rateOverride ?? e.rate) + (e.additionalRate||0), 0);
   document.getElementById('summary-totals').innerHTML =
     `<td colspan="4" style="text-align:right;font-weight:700;color:var(--accent)">TOTAL (${entries.length} entries)</td><td colspan="2" style="color:var(--green);font-family:'DM Mono',monospace;font-weight:700">${fmt(total)}</td><td></td><td></td>`;
 }
@@ -2144,6 +2181,7 @@ async function deleteEntry(id) {
   db.entries = db.entries.filter(e => e.id !== id);
   await sbDeleteEntry(id);
   renderSummary();
+  syncPayrollIfPresent();
 }
 
 function clearSummaryFilters() {
@@ -2405,6 +2443,7 @@ function addManualPayRow(forName) {
   db.entries.push(entry);
   sbSaveEntry(entry); // async, fire and forget for responsiveness
   logActivity(`added a manual pay row for ${name}`, null, id, 'new');
+  syncSummaryIfPresent();
 
   // Append the new row to the correct cleaner's table without full re-render
   const tbody = document.getElementById('payroll-tbody-' + name.replace(/[^a-zA-Z0-9]/g,'_'));
@@ -2449,6 +2488,7 @@ async function deletePayrollEntry(id) {
   db.entries = db.entries.filter(e => e.id !== id);
   await sbDeleteEntry(id);
   if (cleanerName) refreshPayrollGrandTotal(cleanerName);
+  syncSummaryIfPresent();
   const row = document.getElementById('manrow-' + id);
   if (row) { row.remove(); return; }
   renderPayroll();
@@ -2473,6 +2513,7 @@ function handlePayrollRateOverride(id, input, isManual) {
   sbSaveEntry(entry);
   logActivity(`changed the rate for ${entry.cleaner} — ${entry.property} to ${fmt(newVal)}`, null, id, 'rate');
   refreshPayrollRowTotal(id);
+  syncSummaryIfPresent();
 }
 
 function handlePayrollAdditionalRate(id, input) {
@@ -2482,6 +2523,7 @@ function handlePayrollAdditionalRate(id, input) {
   sbSaveEntry(entry);
   logActivity(`set an additional rate of ${fmt(entry.additionalRate)} for ${entry.cleaner} — ${entry.property}`, null, id, 'additionalRate');
   refreshPayrollRowTotal(id);
+  syncSummaryIfPresent();
 }
 
 function handlePayrollNotes(id, textarea) {
@@ -2490,6 +2532,22 @@ function handlePayrollNotes(id, textarea) {
   entry.notes = textarea.value;
   sbSaveEntry(entry);
   logActivity(`edited the notes for ${entry.cleaner} — ${entry.property}`, null, id, 'notes');
+  syncSummaryIfPresent();
+}
+
+function handleSummaryDateChange(id, input) {
+  const entry = db.entries.find(e => e.id === id);
+  if (!entry) return;
+  const newDate = input.value;
+  if (!newDate) { input.value = entry.date; return; }
+  const oldDate = entry.date;
+  entry.date = newDate;
+  sbSaveEntry(entry);
+  logActivity(`changed the date for ${entry.cleaner} — ${entry.property} from ${fmtDate(oldDate)} to ${fmtDate(newDate)}`, null, id, 'date');
+  // Changing the date can move this entry in/out of the current Summary/Payroll
+  // date filters, so do a full re-render on both rather than a targeted patch.
+  syncSummaryIfPresent();
+  syncPayrollIfPresent();
 }
 
 function refreshPayrollRowTotal(id) {
