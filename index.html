@@ -731,11 +731,20 @@ function activateApp(user, role) {
   startActivityTracking();
   // Background poll to keep badge updated on any page
   setInterval(updateChatBadge, 3000);
-  // Load all data from Supabase
+  // Load all data from Supabase, then re-render whichever page we're actually on
+  // (showPage ran with an empty db before this resolved, so tables/reports need a refresh)
   loadFromSupabase().then(() => {
-    renderDashboard();
     startChatPolling();
     applySearchableDropdowns();
+    const activePage = currentPageId || lastPage;
+    // Re-render directly rather than relying on showPage's internal first-visit/tabState
+    // gating, so saved filters always reflect freshly-loaded data after a refresh.
+    if (activePage === 'dashboard') renderDashboard();
+    else if (activePage === 'summary') renderSummary();
+    else if (activePage === 'payroll') renderPayroll();
+    else if (activePage === 'billing') renderBilling();
+    else if (activePage === 'database') renderDbEmployees();
+    else showPage(activePage);
   });
 }
 
