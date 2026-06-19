@@ -336,6 +336,20 @@
   .btn-add-row:hover { background: rgba(144,224,239,0.08); }
   tr.manual-row td { background: rgba(144,224,239,0.04); }
   tr.manual-row td:first-child { color: var(--text-muted); font-size: 12px; }
+  /* Greg edit/add highlight */
+  .greg-edit, .greg-edit td { color: #f5d033 !important; }
+  .greg-edit td.green, .greg-edit td.mono { color: #f5d033 !important; }
+  .greg-edit-badge { display: inline-block; background: rgba(245,208,51,0.15); color: #f5d033; font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+  input.greg-edit-input, textarea.greg-edit-input { color: #f5d033 !important; border-color: rgba(245,208,51,0.4) !important; }
+  /* Activity log */
+  .activity-item { display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-item.unread { background: rgba(245,208,51,0.05); margin: 0 -28px; padding: 14px 28px; }
+  .activity-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .activity-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.5; }
+  .activity-text strong { color: #f5d033; }
+  .activity-time { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .activity-badge { position: absolute; top: 4px; right: 4px; background: #f5d033; color: #0a1520; font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 3px; line-height: 1; pointer-events: none; }
 
   /* ── Searchable dropdown ── */
   .sd-wrap { position: relative; display: inline-block; width: 100%; }
@@ -644,6 +658,19 @@
   </div>
 </div>
 
+<!-- ACTIVITY LOG (admin only) -->
+<div id="page-activity" class="page">
+  <div class="section-title">🔔 Activity</div>
+  <div class="section-sub">Every change Greg makes — additions, edits, and deletions — appears here.</div>
+  <div class="filter-row">
+    <button class="btn btn-secondary" onclick="markActivitySeen();renderActivityLog();" style="margin-bottom:0;">Mark All Read</button>
+    <button class="btn btn-danger" onclick="clearActivityLog()" style="margin-bottom:0;">Clear Log</button>
+  </div>
+  <div class="card">
+    <div id="activity-log-body"></div>
+  </div>
+</div>
+
 </div><!-- /app-shell -->
 
 <script>
@@ -731,11 +758,13 @@ function activateApp(user, role) {
   startActivityTracking();
   // Background poll to keep badge updated on any page
   setInterval(updateChatBadge, 3000);
+  setInterval(updateActivityBadge, 3000);
   // Load all data from Supabase, then re-render whichever page we're actually on
   // (showPage ran with an empty db before this resolved, so tables/reports need a refresh)
   loadFromSupabase().then(() => {
     startChatPolling();
     applySearchableDropdowns();
+    updateActivityBadge();
     const activePage = currentPageId || lastPage;
     // Re-render directly rather than relying on showPage's internal first-visit/tabState
     // gating, so saved filters always reflect freshly-loaded data after a refresh.
@@ -810,10 +839,12 @@ function buildNav() {
     { id: 'database',  label: 'Database' },
     { id: 'messages',  label: '💬' },
   ];
+  if (isAdmin()) tabs.push({ id: 'activity', label: '🔔 Activity' });
   document.getElementById('main-nav').innerHTML = tabs.map(t =>
     `<button class="nav-btn" id="navbtn-${t.id}" onclick="showPage('${t.id}')">${t.label}</button>`
   ).join('');
   setTimeout(updateChatBadge, 0);
+  setTimeout(updateActivityBadge, 0);
 }
 
 function showReadonlyBanner(pageId) {
@@ -1843,6 +1874,7 @@ function showPage(id) {
   }
   if (id === 'messages') { loadChatFromSupabase(); markChatSeen(); startChatPolling(); }
   else stopChatPolling();
+  if (id === 'activity') { renderActivityLog(); markActivitySeen(); }
 }
 
 // ==========================================
@@ -1866,8 +1898,12 @@ function renderDashboard() {
 
   // Recent entries
   const recent = [...db.entries].sort((a,b) => b.date.localeCompare(a.date)).slice(0,8);
+  const touchedIds = isAdmin() ? getGregTouchedEntryIds() : new Set();
   document.getElementById('recent-entries').innerHTML = recent.length
-    ? recent.map(e => `<tr><td class="muted">${fmtDate(e.date)}</td><td>${e.cleaner}</td><td>${e.property}</td><td>${typeBadge(e.type)}</td><td class="green">${fmt(e.rate + (e.additionalRate||0))}</td></tr>`).join('')
+    ? recent.map(e => {
+        const isGregEdit = touchedIds.has(String(e.id));
+        return `<tr${isGregEdit ? ' class="greg-edit"' : ''}><td class="muted">${fmtDate(e.date)}</td><td>${e.cleaner}</td><td>${e.property}</td><td>${typeBadge(e.type)}</td><td class="green">${fmt(e.rate + (e.additionalRate||0))}${isGregEdit ? '<span class="greg-edit-badge">Greg</span>' : ''}</td></tr>`;
+      }).join('')
     : `<tr><td colspan="5" class="empty"><div class="empty-icon">📋</div>No entries yet. <a href="#" onclick="showPage('form');return false;" style="color:var(--accent)">Log your first entry →</a></td></tr>`;
 
   // Top earners this month
@@ -1954,6 +1990,7 @@ async function submitEntry() {
 
   db.entries.push(entry);
   await sbSaveEntry(entry);
+  await logActivity(`logged a new entry: ${cleaner} — ${property} (${fmt(baseRate + additionalRate)})`, null, entry.id);
   const total = baseRate + additionalRate;
   showAlert('form-alert', 'success', `✓ Entry logged: ${cleaner} — ${property} — ${fmt(total)}`);
   document.getElementById('entry-property').value = '';
@@ -2006,6 +2043,7 @@ function renderSummary() {
   saveTabState('summary');
   const entries = getFilteredEntries();
   const canDel = canEdit('summary');
+  const touchedIds = isAdmin() ? getGregTouchedEntryIds() : new Set();
   const tbody = document.getElementById('summary-body');
   tbody.innerHTML = entries.length
     ? entries.map(e => {
@@ -2013,15 +2051,16 @@ function renderSummary() {
         const deleteBtn = canDel
           ? `<td class="no-print"><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button></td>`
           : `<td class="no-print"></td>`;
+        const isGregEdit = touchedIds.has(String(e.id));
         return `
-        <tr>
+        <tr${isGregEdit ? ' class="greg-edit"' : ''}>
           <td>${fmtDate(e.date)}</td>
           <td>${e.cleaner}</td>
           <td>${e.property}</td>
           <td>${typeBadge(e.type)}</td>
           <td class="green">${fmt(e.rate)}</td>
           <td class="mono" style="color:var(--accent2)">${addl !== 0 ? fmt(addl) : '—'}</td>
-          <td class="muted">${e.notes||''}</td>
+          <td class="muted">${e.notes||''}${isGregEdit ? '<span class="greg-edit-badge">Greg</span>' : ''}</td>
           ${deleteBtn}
         </tr>`;
       }).join('')
@@ -2117,47 +2156,53 @@ function renderStaffPanel(from, to) {
 }
 
 function buildPayrollRowsHtml(entries, editable) {
+  const touchedIds = isAdmin() ? getGregTouchedEntryIds() : new Set();
   return entries.length
     ? entries.map(e => {
         const addl = e.additionalRate || 0;
         const isOverridden = e.rateOverride !== undefined && e.rateOverride !== null;
         const displayRate = isOverridden ? e.rateOverride : e.rate;
         const isManual = e.isManual;
+        const isGregEdit = touchedIds.has(String(e.id));
+        const gregBadge = isGregEdit ? '<span class="greg-edit-badge">Greg</span>' : '';
         if (editable) {
           const rateField = (isManual && !isAdmin())
             ? `<span class="payroll-inline-input" style="display:inline-block;padding:4px 6px;color:var(--text-muted);font-style:italic;">${fmt(displayRate)}</span>`
-            : `<input type="number" class="payroll-inline-input${isOverridden ? ' overridden' : ''}"
+            : `<input type="number" class="payroll-inline-input${isOverridden ? ' overridden' : ''}${isGregEdit ? ' greg-edit-input' : ''}"
                 data-id="${e.id}" data-base="${e.rate}"
                 value="${displayRate}" step="0.01"
                 title="${isManual ? 'Manual pay entry' : 'Base rate from DB: ' + fmt(e.rate)}"
                 onchange="handlePayrollRateOverride(${e.id}, this, ${isManual})">
               ${isOverridden && !isManual ? `<span class="override-hint">✎ overridden (base: ${fmt(e.rate)})</span>` : ''}`;
           const canDelete = isAdmin() || (isManual && e.addedBy === currentUser);
-          return `<tr${isManual ? ' class="manual-row"' : ''}>
+          const rowClasses = [isManual ? 'manual-row' : '', isGregEdit ? 'greg-edit' : ''].filter(Boolean).join(' ');
+          return `<tr${rowClasses ? ` class="${rowClasses}"` : ''}>
             <td>${isManual ? `<span style="font-size:11px;color:var(--text-muted);">${fmtDate(e.date)}<br><span style="color:var(--accent);font-size:10px;">+ manual</span></span>` : fmtDate(e.date)}</td>
             <td>${isManual ? `<span style="color:var(--text-muted);font-style:italic;">${e.property||'—'}</span>` : e.property}</td>
             <td>${isManual ? `<span class="badge badge-misc">Manual</span>` : typeBadge(e.type)}</td>
             <td>${rateField}</td>
             <td>
-              <input type="number" class="payroll-inline-input"
+              <input type="number" class="payroll-inline-input${isGregEdit ? ' greg-edit-input' : ''}"
                 value="${addl || ''}" step="0.01" placeholder="0.00"
                 onchange="handlePayrollAdditionalRate(${e.id}, this)">
             </td>
-            <td class="green" id="payrow-total-${e.id}">${fmt(displayRate + addl)}</td>
+            <td class="green" id="payrow-total-${e.id}" style="${isGregEdit ? 'color:#f5d033;' : ''}">${fmt(displayRate + addl)}</td>
             <td>
-              <textarea class="payroll-notes-input" onchange="handlePayrollNotes(${e.id}, this)">${e.notes||''}</textarea>
+              <textarea class="payroll-notes-input${isGregEdit ? ' greg-edit-input' : ''}" onchange="handlePayrollNotes(${e.id}, this)">${e.notes||''}</textarea>
+              ${gregBadge}
             </td>
             <td class="no-print">${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deletePayrollEntry(${e.id})" title="Delete row">✕</button>` : ''}</td>
           </tr>`;
         } else {
-          return `<tr${isManual ? ' class="manual-row"' : ''}>
+          const rowClasses = [isManual ? 'manual-row' : '', isGregEdit ? 'greg-edit' : ''].filter(Boolean).join(' ');
+          return `<tr${rowClasses ? ` class="${rowClasses}"` : ''}>
             <td>${fmtDate(e.date)}${isManual ? '<br><span style="color:var(--accent);font-size:10px;">+ manual</span>' : ''}</td>
             <td>${e.property||'—'}</td>
             <td>${isManual ? '<span class="badge badge-misc">Manual</span>' : typeBadge(e.type)}</td>
             <td class="green">${fmt(displayRate)}</td>
             <td class="mono" style="color:var(--accent2)">${addl !== 0 ? fmt(addl) : '—'}</td>
             <td class="green">${fmt(displayRate + addl)}</td>
-            <td class="muted">${e.notes||''}</td>
+            <td class="muted">${e.notes||''}${gregBadge}</td>
             <td></td>
           </tr>`;
         }
@@ -2293,6 +2338,7 @@ function addManualPayRow(forName) {
   };
   db.entries.push(entry);
   sbSaveEntry(entry); // async, fire and forget for responsiveness
+  logActivity(`added a manual pay row for ${name}`, null, id);
 
   // Append the new row to the correct cleaner's table without full re-render
   const tbody = document.getElementById('payroll-tbody-' + name.replace(/[^a-zA-Z0-9]/g,'_'));
@@ -2333,6 +2379,7 @@ async function deletePayrollEntry(id) {
   if (!confirm('Remove this pay row?')) return;
   const entry = db.entries.find(e => e.id === id);
   const cleanerName = entry ? entry.cleaner : null;
+  if (entry) logActivity(`deleted a pay row for ${entry.cleaner} (${entry.property})`, null, id);
   db.entries = db.entries.filter(e => e.id !== id);
   await sbDeleteEntry(id);
   if (cleanerName) refreshPayrollGrandTotal(cleanerName);
@@ -2358,6 +2405,7 @@ function handlePayrollRateOverride(id, input, isManual) {
   }
   entry.rateOverride = newVal;
   sbSaveEntry(entry);
+  logActivity(`changed the rate for ${entry.cleaner} — ${entry.property} to ${fmt(newVal)}`, null, id);
   refreshPayrollRowTotal(id);
 }
 
@@ -2366,6 +2414,7 @@ function handlePayrollAdditionalRate(id, input) {
   if (!entry) return;
   entry.additionalRate = parseFloat(input.value) || 0;
   sbSaveEntry(entry);
+  logActivity(`set an additional rate of ${fmt(entry.additionalRate)} for ${entry.cleaner} — ${entry.property}`, null, id);
   refreshPayrollRowTotal(id);
 }
 
@@ -2374,6 +2423,7 @@ function handlePayrollNotes(id, textarea) {
   if (!entry) return;
   entry.notes = textarea.value;
   sbSaveEntry(entry);
+  logActivity(`edited the notes for ${entry.cleaner} — ${entry.property}`, null, id);
 }
 
 function refreshPayrollRowTotal(id) {
@@ -4082,6 +4132,126 @@ function startChatPolling() {
 function stopChatPolling() {
   if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
 }
+
+// ==========================================
+// ACTIVITY LOG — tracks every change Greg makes, visible only to admin
+// ==========================================
+const ACTIVITY_LOG_KEY = '__activity_log__';
+const ACTIVITY_SEEN_KEY = 'drs_activity_seen';
+
+function getActivityLog() {
+  return (db.billingMisc && db.billingMisc[ACTIVITY_LOG_KEY]) || [];
+}
+
+async function logActivity(action, details, entryId) {
+  // Only log changes made by Greg (the non-admin user) — Jeinna's own edits aren't tracked
+  if (currentUser !== 'Greg') return;
+  if (!db.billingMisc) db.billingMisc = {};
+  if (!db.billingMisc[ACTIVITY_LOG_KEY]) db.billingMisc[ACTIVITY_LOG_KEY] = [];
+  const entry = {
+    id: Date.now() + Math.random(),
+    user: currentUser,
+    action,
+    details,
+    entryId: entryId ?? null,
+    ts: new Date().toISOString()
+  };
+  db.billingMisc[ACTIVITY_LOG_KEY].unshift(entry);
+  // Cap the log at 500 entries so it doesn't grow forever
+  if (db.billingMisc[ACTIVITY_LOG_KEY].length > 500) {
+    db.billingMisc[ACTIVITY_LOG_KEY] = db.billingMisc[ACTIVITY_LOG_KEY].slice(0, 500);
+  }
+  await sbSaveBillingMisc(ACTIVITY_LOG_KEY, db.billingMisc[ACTIVITY_LOG_KEY]);
+  updateActivityBadge();
+}
+
+// Returns a Set of entry IDs that Greg has touched (added or edited).
+// Used to apply the yellow highlight wherever these entries are rendered.
+function getGregTouchedEntryIds() {
+  const log = getActivityLog();
+  const ids = new Set();
+  log.forEach(a => { if (a.entryId !== null && a.entryId !== undefined) ids.add(String(a.entryId)); });
+  return ids;
+}
+function wasTouchedByGreg(entryId) {
+  return getGregTouchedEntryIds().has(String(entryId));
+}
+
+function markActivitySeen() {
+  const log = getActivityLog();
+  if (log.length === 0) return;
+  localStorage.setItem(ACTIVITY_SEEN_KEY, log[0].id);
+  updateActivityBadge();
+}
+
+function getUnseenActivityCount() {
+  const log = getActivityLog();
+  if (!log.length) return 0;
+  const lastSeen = parseFloat(localStorage.getItem(ACTIVITY_SEEN_KEY) || '0');
+  return log.filter(a => a.id > lastSeen).length;
+}
+
+function updateActivityBadge() {
+  if (!isAdmin()) return;
+  const btn = document.getElementById('navbtn-activity');
+  if (!btn) return;
+  const count = getUnseenActivityCount();
+  const existing = btn.querySelector('.activity-badge');
+  if (count > 0) {
+    if (existing) { existing.textContent = count > 99 ? '99+' : count; }
+    else {
+      const badge = document.createElement('span');
+      badge.className = 'activity-badge';
+      badge.textContent = count > 99 ? '99+' : count;
+      btn.appendChild(badge);
+    }
+  } else {
+    if (existing) existing.remove();
+  }
+}
+
+function fmtActivityTime(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  if (isToday) return 'Today, ' + time;
+  return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' · ' + time;
+}
+
+function renderActivityLog() {
+  if (!isAdmin()) return;
+  const body = document.getElementById('activity-log-body');
+  if (!body) return;
+  const log = getActivityLog();
+  const lastSeen = parseFloat(localStorage.getItem(ACTIVITY_SEEN_KEY) || '0');
+
+  if (log.length === 0) {
+    body.innerHTML = `<div class="empty"><div class="empty-icon">🔔</div>No activity from Greg yet.</div>`;
+    return;
+  }
+
+  body.innerHTML = log.map(a => {
+    const unread = a.id > lastSeen;
+    return `<div class="activity-item${unread ? ' unread' : ''}">
+      <div class="activity-icon">✏️</div>
+      <div class="activity-text">
+        <strong>${a.user}</strong> ${a.action}
+        <div class="activity-time">${fmtActivityTime(a.ts)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function clearActivityLog() {
+  if (!isAdmin()) return;
+  if (!confirm('Clear the entire activity log? This cannot be undone.')) return;
+  db.billingMisc[ACTIVITY_LOG_KEY] = [];
+  await sbSaveBillingMisc(ACTIVITY_LOG_KEY, []);
+  renderActivityLog();
+  updateActivityBadge();
+}
+
 </script>
 </body>
 </html>
