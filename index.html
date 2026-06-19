@@ -1781,7 +1781,7 @@ function showPage(id) {
     initPayrollFilters();          // repopulates cleaner dropdown (preserves value)
     restoreTabState('payroll');
     // Re-render with restored cleaner/dates if we have them
-    if (tabState.payroll.cleaner) renderPayroll();
+    if (tabState.payroll.cleaner || tabState.payroll.from || tabState.payroll.to) renderPayroll();
   }
   if (id === 'billing') {
     if (firstVisit) initBillingDates();  // only set default dates on first visit
@@ -2066,26 +2066,8 @@ function renderStaffPanel(from, to) {
     </div>`;
 }
 
-function renderPayroll() {
-  const name = document.getElementById('payroll-cleaner').value;
-  const from = document.getElementById('payroll-from').value;
-  const to = document.getElementById('payroll-to').value;
-  const container = document.getElementById('payroll-report');
-  renderStaffPanel(from, to);
-  if (!name) { container.innerHTML = ''; return; }
-
-  const entries = db.entries.filter(e => {
-    if (e.cleaner !== name) return false;
-    if (from && e.date < from) return false;
-    if (to && e.date > to) return false;
-    return true;
-  }).sort((a,b) => a.date.localeCompare(b.date));
-
-  const total = entries.reduce((s,e) => s + (e.rateOverride ?? e.rate) + (e.additionalRate||0), 0);
-  const range = (from || to) ? `${from ? fmtDate(from) : 'Start'} – ${to ? fmtDate(to) : 'Today'}` : 'All Time';
-  const editable = canEdit('payroll');
-
-  const rowsHtml = entries.length
+function buildPayrollRowsHtml(entries, editable) {
+  return entries.length
     ? entries.map(e => {
         const addl = e.additionalRate || 0;
         const isOverridden = e.rateOverride !== undefined && e.rateOverride !== null;
@@ -2123,7 +2105,7 @@ function renderPayroll() {
             <td>${e.property||'—'}</td>
             <td>${isManual ? '<span class="badge badge-misc">Manual</span>' : typeBadge(e.type)}</td>
             <td class="green">${fmt(displayRate)}</td>
-            <td class="mono" style="color:var(--accent2)">${addl > 0 ? fmt(addl) : '—'}</td>
+            <td class="mono" style="color:var(--accent2)">${addl !== 0 ? fmt(addl) : '—'}</td>
             <td class="green">${fmt(displayRate + addl)}</td>
             <td class="muted">${e.notes||''}</td>
             <td></td>
@@ -2131,6 +2113,11 @@ function renderPayroll() {
         }
       }).join('')
     : `<tr><td colspan="8" class="empty">No entries for this period.</td></tr>`;
+}
+
+function buildPayrollInvoiceHtml(name, entries, range, editable) {
+  const total = entries.reduce((s,e) => s + (e.rateOverride ?? e.rate) + (e.additionalRate||0), 0);
+  const rowsHtml = buildPayrollRowsHtml(entries, editable);
 
   const editHint = editable ? `
     <div style="background:rgba(144,224,239,0.06);border:1px solid rgba(144,224,239,0.15);border-radius:var(--radius);padding:10px 16px;margin-bottom:16px;font-size:12px;color:var(--accent);">
@@ -2138,12 +2125,12 @@ function renderPayroll() {
     </div>` : '';
 
   const addRowBtn = editable ? `
-    <button class="btn-add-row no-print" onclick="addManualPayRow()">
+    <button class="btn-add-row no-print" onclick="addManualPayRow('${name.replace(/'/g,"\\'")}')">
       <span style="font-size:16px;line-height:1;">+</span> Add Pay Row
     </button>` : '';
 
-  container.innerHTML = `
-    <div class="invoice-box" id="payroll-print-area" style="max-width:960px;">
+  return `
+    <div class="invoice-box payroll-cleaner-box" data-cleaner="${name}" style="max-width:960px;margin-bottom:24px;">
       <div class="invoice-header">
         <div>
           <div class="invoice-title">Pay Statement</div>
@@ -2163,11 +2150,11 @@ function renderPayroll() {
             <th>Date</th><th>Property</th><th>Type</th><th>Rate</th>
             <th>Additional Rate</th><th>Total</th><th>Notes</th><th class="no-print"></th>
           </tr></thead>
-          <tbody id="payroll-tbody">${rowsHtml}</tbody>
+          <tbody id="payroll-tbody-${name.replace(/[^a-zA-Z0-9]/g,'_')}" class="payroll-tbody-cleaner">${rowsHtml}</tbody>
           <tfoot>
             <tr class="totals-row">
               <td colspan="5" style="text-align:right">TOTAL EARNINGS</td>
-              <td id="payroll-grand-total" style="color:var(--green);font-family:'DM Mono',monospace">${fmt(total)}</td>
+              <td class="payroll-grand-total-cleaner" style="color:var(--green);font-family:'DM Mono',monospace">${fmt(total)}</td>
               <td></td><td class="no-print"></td>
             </tr>
           </tfoot>
@@ -2177,8 +2164,59 @@ function renderPayroll() {
     </div>`;
 }
 
-function addManualPayRow() {
+function renderPayroll() {
   const name = document.getElementById('payroll-cleaner').value;
+  const from = document.getElementById('payroll-from').value;
+  const to = document.getElementById('payroll-to').value;
+  const container = document.getElementById('payroll-report');
+  renderStaffPanel(from, to);
+
+  const range = (from || to) ? `${from ? fmtDate(from) : 'Start'} – ${to ? fmtDate(to) : 'Today'}` : 'All Time';
+  const editable = canEdit('payroll');
+
+  if (name) {
+    // Single-cleaner view (existing behavior when a name is selected)
+    const entries = db.entries.filter(e => {
+      if (e.cleaner !== name) return false;
+      if (from && e.date < from) return false;
+      if (to && e.date > to) return false;
+      return true;
+    }).sort((a,b) => a.date.localeCompare(b.date));
+
+    container.innerHTML = buildPayrollInvoiceHtml(name, entries, range, editable);
+    return;
+  }
+
+  // Default view: no cleaner selected — show every cleaner who worked in the date range,
+  // each in their own stacked container. Requires at least one date bound to avoid showing
+  // the entire all-time dataset for every employee at once.
+  if (!from && !to) {
+    container.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">📅</div>Select a date (or date range) to see payroll for everyone who worked, or pick a specific cleaner above.</div></div>`;
+    return;
+  }
+
+  const inRange = db.entries.filter(e => {
+    if (from && e.date < from) return false;
+    if (to && e.date > to) return false;
+    return true;
+  });
+
+  const cleanerNames = [...new Set(inRange.map(e => e.cleaner))].sort();
+
+  if (cleanerNames.length === 0) {
+    container.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">📂</div>No one worked during this period.</div></div>`;
+    return;
+  }
+
+  container.innerHTML = cleanerNames.map(cName => {
+    const entries = inRange.filter(e => e.cleaner === cName).sort((a,b) => a.date.localeCompare(b.date));
+    return buildPayrollInvoiceHtml(cName, entries, range, editable);
+  }).join('');
+}
+
+function addManualPayRow(forName) {
+  const selectedName = document.getElementById('payroll-cleaner').value;
+  const name = forName || selectedName;
   const from = document.getElementById('payroll-from').value;
   const to   = document.getElementById('payroll-to').value;
   if (!name) return;
@@ -2204,8 +2242,8 @@ function addManualPayRow() {
   db.entries.push(entry);
   sbSaveEntry(entry); // async, fire and forget for responsiveness
 
-  // Append the new row to the table without full re-render
-  const tbody = document.getElementById('payroll-tbody');
+  // Append the new row to the correct cleaner's table without full re-render
+  const tbody = document.getElementById('payroll-tbody-' + name.replace(/[^a-zA-Z0-9]/g,'_'));
   if (!tbody) { renderPayroll(); return; }
 
   const rateCell = isAdmin()
@@ -2241,9 +2279,11 @@ function addManualPayRow() {
 
 async function deletePayrollEntry(id) {
   if (!confirm('Remove this pay row?')) return;
+  const entry = db.entries.find(e => e.id === id);
+  const cleanerName = entry ? entry.cleaner : null;
   db.entries = db.entries.filter(e => e.id !== id);
   await sbDeleteEntry(id);
-  refreshPayrollGrandTotal();
+  if (cleanerName) refreshPayrollGrandTotal(cleanerName);
   const row = document.getElementById('manrow-' + id);
   if (row) { row.remove(); return; }
   renderPayroll();
@@ -2291,21 +2331,21 @@ function refreshPayrollRowTotal(id) {
   const addl = entry.additionalRate || 0;
   const rowEl = document.getElementById('payrow-total-' + id);
   if (rowEl) rowEl.textContent = fmt(rate + addl);
-  refreshPayrollGrandTotal();
+  refreshPayrollGrandTotal(entry.cleaner);
 }
 
-function refreshPayrollGrandTotal() {
-  const name = document.getElementById('payroll-cleaner').value;
+function refreshPayrollGrandTotal(cleanerName) {
   const from = document.getElementById('payroll-from').value;
   const to   = document.getElementById('payroll-to').value;
   const all  = db.entries.filter(e => {
-    if (e.cleaner !== name) return false;
+    if (e.cleaner !== cleanerName) return false;
     if (from && e.date < from) return false;
     if (to && e.date > to) return false;
     return true;
   });
   const grand = all.reduce((s,e) => s + (e.rateOverride ?? e.rate) + (e.additionalRate||0), 0);
-  const gtEl = document.getElementById('payroll-grand-total');
+  const box = document.querySelector(`.payroll-cleaner-box[data-cleaner="${cleanerName.replace(/"/g,'&quot;')}"]`);
+  const gtEl = box ? box.querySelector('.payroll-grand-total-cleaner') : null;
   if (gtEl) gtEl.textContent = fmt(grand);
 }
 
@@ -2317,20 +2357,24 @@ function exportPayrollCSV() {
   const name = document.getElementById('payroll-cleaner').value;
   const from = document.getElementById('payroll-from').value;
   const to = document.getElementById('payroll-to').value;
-  if (!name) return;
+
+  // If a specific cleaner is selected, export just them; otherwise export everyone shown
   const entries = db.entries.filter(e => {
-    if (e.cleaner !== name) return false;
+    if (name && e.cleaner !== name) return false;
     if (from && e.date < from) return false;
     if (to && e.date > to) return false;
     return true;
-  }).sort((a,b) => a.date.localeCompare(b.date));
+  }).sort((a,b) => a.cleaner.localeCompare(b.cleaner) || a.date.localeCompare(b.date));
+
+  if (entries.length === 0) { alert('No entries to export for this selection.'); return; }
+
   const rows = [['Employee','Date','Property','Type','Base Rate','Effective Rate','Additional Rate','Total','Notes']];
   entries.forEach(e => {
     const eff = e.rateOverride ?? e.rate;
     const addl = e.additionalRate || 0;
     rows.push([e.cleaner, e.date, e.property, e.type, e.rate, eff, addl, eff+addl, e.notes||'']);
   });
-  downloadCSV(rows, `Payroll_${name.replace(/\s/g,'_')}.csv`);
+  downloadCSV(rows, name ? `Payroll_${name.replace(/\s/g,'_')}.csv` : `Payroll_All_${from||'start'}_to_${to||'today'}.csv`);
 }
 
 // ==========================================
