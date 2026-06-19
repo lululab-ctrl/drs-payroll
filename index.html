@@ -2133,11 +2133,11 @@ function buildPayrollInvoiceHtml(name, entries, range, editable) {
     <div class="invoice-box payroll-cleaner-box" data-cleaner="${name}" style="max-width:960px;margin-bottom:24px;">
       <div class="invoice-header">
         <div>
-          <div class="invoice-title">Pay Statement</div>
+          <div class="invoice-title">${name}</div>
           <div style="color:var(--text-muted);margin-top:6px;font-size:14px;">Dream Rental Solutions</div>
         </div>
         <div class="invoice-meta">
-          <strong>${name}</strong>
+          <strong>Pay Statement</strong>
           Period: ${range}<br>
           Generated: ${new Date().toLocaleDateString()}<br>
           Entries: ${entries.length}
