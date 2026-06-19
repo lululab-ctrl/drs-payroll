@@ -337,9 +337,7 @@
   tr.manual-row td { background: rgba(144,224,239,0.04); }
   tr.manual-row td:first-child { color: var(--text-muted); font-size: 12px; }
   /* Greg edit/add highlight */
-  .greg-edit, .greg-edit td { color: #f5d033 !important; }
-  .greg-edit td.green, .greg-edit td.mono { color: #f5d033 !important; }
-  .greg-edit-badge { display: inline-block; background: rgba(245,208,51,0.15); color: #f5d033; font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+  .greg-edit-number { color: #f5d033 !important; }
   input.greg-edit-input, textarea.greg-edit-input { color: #f5d033 !important; border-color: rgba(245,208,51,0.4) !important; }
   /* Activity log */
   .activity-item { display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
@@ -1969,7 +1967,7 @@ function renderDashboard() {
   document.getElementById('recent-entries').innerHTML = recent.length
     ? recent.map(e => {
         const isGregEdit = touchedIds.has(String(e.id));
-        return `<tr${isGregEdit ? ' class="greg-edit"' : ''}><td class="muted">${fmtDate(e.date)}</td><td>${e.cleaner}</td><td>${e.property}</td><td>${typeBadge(e.type)}</td><td class="green">${fmt(e.rate + (e.additionalRate||0))}${isGregEdit ? '<span class="greg-edit-badge">Greg</span>' : ''}</td></tr>`;
+        return `<tr><td class="muted">${fmtDate(e.date)}</td><td>${e.cleaner}</td><td>${e.property}</td><td>${typeBadge(e.type)}</td><td class="green${isGregEdit ? ' greg-edit-number' : ''}">${fmt(e.rate + (e.additionalRate||0))}</td></tr>`;
       }).join('')
     : `<tr><td colspan="5" class="empty"><div class="empty-icon">📋</div>No entries yet. <a href="#" onclick="showPage('form');return false;" style="color:var(--accent)">Log your first entry →</a></td></tr>`;
 
