@@ -765,6 +765,7 @@ function doLogout(timedOut = false) {
   Object.assign(tabState.payroll,  { cleaner:'', from:'', to:'' });
   Object.assign(tabState.billing,  { from:'', to:'', group:'' });
   Object.assign(tabState.database, { subTab:'db-employees', empFilter:'', propFilter:'', billingFilter:'' });
+  try { sessionStorage.removeItem(TAB_STATE_KEY); } catch(e) {}
   currentPageId = null;
   // Clear all visible fields so they don't bleed into the next session
   const safeSet = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
@@ -1696,14 +1697,40 @@ function typeBadge(t) {
 }
 
 // ==========================================
-// TAB STATE — remembers filters/selections per tab for the session
+// TAB STATE — remembers filters/selections per tab, persisted across refresh
 // ==========================================
-const tabState = {
-  summary:  { from: '', to: '', cleaner: '', property: '' },
-  payroll:  { cleaner: '', from: '', to: '' },
-  billing:  { from: '', to: '', group: '' },
-  database: { subTab: 'db-employees', empFilter: '', propFilter: '', billingFilter: '' },
-};
+const TAB_STATE_KEY = 'drs_tab_state';
+
+function getDefaultTabState() {
+  return {
+    summary:  { from: '', to: '', cleaner: '', property: '' },
+    payroll:  { cleaner: '', from: '', to: '' },
+    billing:  { from: '', to: '', group: '' },
+    database: { subTab: 'db-employees', empFilter: '', propFilter: '', billingFilter: '' },
+  };
+}
+
+function loadTabStateFromStorage() {
+  try {
+    const raw = sessionStorage.getItem(TAB_STATE_KEY);
+    if (!raw) return getDefaultTabState();
+    const parsed = JSON.parse(raw);
+    // Merge with defaults in case shape changes between versions
+    const defaults = getDefaultTabState();
+    return {
+      summary:  { ...defaults.summary,  ...(parsed.summary  || {}) },
+      payroll:  { ...defaults.payroll,  ...(parsed.payroll  || {}) },
+      billing:  { ...defaults.billing,  ...(parsed.billing  || {}) },
+      database: { ...defaults.database, ...(parsed.database || {}) },
+    };
+  } catch(e) { return getDefaultTabState(); }
+}
+
+function persistTabState() {
+  try { sessionStorage.setItem(TAB_STATE_KEY, JSON.stringify(tabState)); } catch(e) {}
+}
+
+const tabState = loadTabStateFromStorage();
 const tabVisited = {};  // tracks which tabs have been initialized
 
 function saveTabState(id) {
@@ -1728,6 +1755,7 @@ function saveTabState(id) {
     tabState.database.propFilter    = document.getElementById('db-prop-filter')?.value || '';
     tabState.database.billingFilter = document.getElementById('db-billing-filter')?.value || '';
   }
+  persistTabState();
 }
 
 function restoreTabState(id) {
