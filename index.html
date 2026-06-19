@@ -337,9 +337,7 @@
   tr.manual-row td { background: rgba(144,224,239,0.04); }
   tr.manual-row td:first-child { color: var(--text-muted); font-size: 12px; }
   /* Greg edit/add highlight */
-  .greg-edit, .greg-edit td { color: #f5d033 !important; }
-  .greg-edit td.green, .greg-edit td.mono { color: #f5d033 !important; }
-  .greg-edit-badge { display: inline-block; background: rgba(245,208,51,0.15); color: #f5d033; font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+  .greg-edit-number { color: #f5d033 !important; }
   input.greg-edit-input, textarea.greg-edit-input { color: #f5d033 !important; border-color: rgba(245,208,51,0.4) !important; }
   /* Activity log */
   .activity-item { display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
@@ -554,10 +552,10 @@
 <!-- EMPLOYEE PAYROLL REPORT -->
 <div id="page-payroll" class="page">
   <div class="section-title">Employee Payroll Report</div>
-  <div class="section-sub">Select a cleaner and date range to generate their payroll.</div>
+  <div class="section-sub">Select a date range to see everyone's payroll, or pick a specific cleaner.</div>
   <div class="filter-row">
     <div class="form-group"><label>Cleaner</label>
-      <select id="payroll-cleaner" onchange="renderPayroll()"><option value="">— Select Cleaner —</option></select>
+      <select id="payroll-cleaner" onchange="renderPayroll()"><option value="">All Employees</option></select>
     </div>
     <div class="form-group"><label>From</label><input type="date" id="payroll-from" onchange="renderPayroll()"></div>
     <div class="form-group"><label>To</label><input type="date" id="payroll-to" onchange="renderPayroll()"></div>
@@ -1969,7 +1967,7 @@ function renderDashboard() {
   document.getElementById('recent-entries').innerHTML = recent.length
     ? recent.map(e => {
         const isGregEdit = touchedIds.has(String(e.id));
-        return `<tr${isGregEdit ? ' class="greg-edit"' : ''}><td class="muted">${fmtDate(e.date)}</td><td>${e.cleaner}</td><td>${e.property}</td><td>${typeBadge(e.type)}</td><td class="green">${fmt(e.rate + (e.additionalRate||0))}${isGregEdit ? '<span class="greg-edit-badge">Greg</span>' : ''}</td></tr>`;
+        return `<tr><td class="muted">${fmtDate(e.date)}</td><td>${e.cleaner}</td><td>${e.property}</td><td>${typeBadge(e.type)}</td><td class="green${isGregEdit ? ' greg-edit-number' : ''}">${fmt(e.rate + (e.additionalRate||0))}</td></tr>`;
       }).join('')
     : `<tr><td colspan="5" class="empty"><div class="empty-icon">📋</div>No entries yet. <a href="#" onclick="showPage('form');return false;" style="color:var(--accent)">Log your first entry →</a></td></tr>`;
 
@@ -2057,7 +2055,7 @@ async function submitEntry() {
 
   db.entries.push(entry);
   await sbSaveEntry(entry);
-  await logActivity(`logged a new entry: ${cleaner} — ${property} (${fmt(baseRate + additionalRate)})`, null, entry.id);
+  await logActivity(`logged a new entry: ${cleaner} — ${property} (${fmt(baseRate + additionalRate)})`, null, entry.id, 'new');
   const total = baseRate + additionalRate;
   showAlert('form-alert', 'success', `✓ Entry logged: ${cleaner} — ${property} — ${fmt(total)}`);
   document.getElementById('entry-property').value = '';
@@ -2110,7 +2108,7 @@ function renderSummary() {
   saveTabState('summary');
   const entries = getFilteredEntries();
   const canDel = canEdit('summary');
-  const touchedIds = isAdmin() ? getGregTouchedEntryIds() : new Set();
+  const touchedFields = isAdmin() ? getGregTouchedFields() : new Map();
   const tbody = document.getElementById('summary-body');
   tbody.innerHTML = entries.length
     ? entries.map(e => {
@@ -2118,16 +2116,18 @@ function renderSummary() {
         const deleteBtn = canDel
           ? `<td class="no-print"><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button></td>`
           : `<td class="no-print"></td>`;
-        const isGregEdit = touchedIds.has(String(e.id));
+        const rateTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'rate') || wasFieldTouchedByGreg(touchedFields, e.id, 'new');
+        const addlTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'additionalRate') || wasFieldTouchedByGreg(touchedFields, e.id, 'new');
+        const notesTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'notes');
         return `
-        <tr${isGregEdit ? ' class="greg-edit"' : ''}>
+        <tr>
           <td>${fmtDate(e.date)}</td>
           <td>${e.cleaner}</td>
           <td>${e.property}</td>
           <td>${typeBadge(e.type)}</td>
-          <td class="green">${fmt(e.rate)}</td>
-          <td class="mono" style="color:var(--accent2)">${addl !== 0 ? fmt(addl) : '—'}</td>
-          <td class="muted">${e.notes||''}${isGregEdit ? '<span class="greg-edit-badge">Greg</span>' : ''}</td>
+          <td class="green${rateTouched ? ' greg-edit-number' : ''}">${fmt(e.rate)}</td>
+          <td class="mono${addlTouched ? ' greg-edit-number' : ''}" style="${addlTouched ? '' : 'color:var(--accent2)'}">${addl !== 0 ? fmt(addl) : '—'}</td>
+          <td class="muted${notesTouched ? ' greg-edit-number' : ''}">${e.notes||''}</td>
           ${deleteBtn}
         </tr>`;
       }).join('')
@@ -2167,7 +2167,7 @@ function exportSummaryCSV() {
 function initPayrollFilters() {
   const sel = document.getElementById('payroll-cleaner');
   const prev = sel.value;
-  sel.innerHTML = '<option value="">— Select Cleaner —</option>' +
+  sel.innerHTML = '<option value="">All Employees</option>' +
     getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
   if (prev) sel.value = prev;
   applySearchableDropdowns();
@@ -2223,53 +2223,52 @@ function renderStaffPanel(from, to) {
 }
 
 function buildPayrollRowsHtml(entries, editable) {
-  const touchedIds = isAdmin() ? getGregTouchedEntryIds() : new Set();
+  const touchedFields = isAdmin() ? getGregTouchedFields() : new Map();
   return entries.length
     ? entries.map(e => {
         const addl = e.additionalRate || 0;
         const isOverridden = e.rateOverride !== undefined && e.rateOverride !== null;
         const displayRate = isOverridden ? e.rateOverride : e.rate;
         const isManual = e.isManual;
-        const isGregEdit = touchedIds.has(String(e.id));
-        const gregBadge = isGregEdit ? '<span class="greg-edit-badge">Greg</span>' : '';
+        const rateTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'rate') || wasFieldTouchedByGreg(touchedFields, e.id, 'new');
+        const addlTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'additionalRate') || wasFieldTouchedByGreg(touchedFields, e.id, 'new');
+        const notesTouched = wasFieldTouchedByGreg(touchedFields, e.id, 'notes');
+        const totalTouched = rateTouched || addlTouched;
         if (editable) {
           const rateField = (isManual && !isAdmin())
             ? `<span class="payroll-inline-input" style="display:inline-block;padding:4px 6px;color:var(--text-muted);font-style:italic;">${fmt(displayRate)}</span>`
-            : `<input type="number" class="payroll-inline-input${isOverridden ? ' overridden' : ''}${isGregEdit ? ' greg-edit-input' : ''}"
+            : `<input type="number" class="payroll-inline-input${isOverridden ? ' overridden' : ''}${rateTouched ? ' greg-edit-input' : ''}"
                 data-id="${e.id}" data-base="${e.rate}"
                 value="${displayRate}" step="0.01"
                 title="${isManual ? 'Manual pay entry' : 'Base rate from DB: ' + fmt(e.rate)}"
                 onchange="handlePayrollRateOverride(${e.id}, this, ${isManual})">
               ${isOverridden && !isManual ? `<span class="override-hint">✎ overridden (base: ${fmt(e.rate)})</span>` : ''}`;
           const canDelete = isAdmin() || (isManual && e.addedBy === currentUser);
-          const rowClasses = [isManual ? 'manual-row' : '', isGregEdit ? 'greg-edit' : ''].filter(Boolean).join(' ');
-          return `<tr${rowClasses ? ` class="${rowClasses}"` : ''}>
+          return `<tr${isManual ? ' class="manual-row"' : ''}>
             <td>${isManual ? `<span style="font-size:11px;color:var(--text-muted);">${fmtDate(e.date)}<br><span style="color:var(--accent);font-size:10px;">+ manual</span></span>` : fmtDate(e.date)}</td>
             <td>${isManual ? `<span style="color:var(--text-muted);font-style:italic;">${e.property||'—'}</span>` : e.property}</td>
             <td>${isManual ? `<span class="badge badge-misc">Manual</span>` : typeBadge(e.type)}</td>
             <td>${rateField}</td>
             <td>
-              <input type="number" class="payroll-inline-input${isGregEdit ? ' greg-edit-input' : ''}"
+              <input type="number" class="payroll-inline-input${addlTouched ? ' greg-edit-input' : ''}"
                 value="${addl || ''}" step="0.01" placeholder="0.00"
                 onchange="handlePayrollAdditionalRate(${e.id}, this)">
             </td>
-            <td class="green" id="payrow-total-${e.id}" style="${isGregEdit ? 'color:#f5d033;' : ''}">${fmt(displayRate + addl)}</td>
+            <td class="green${totalTouched ? ' greg-edit-number' : ''}" id="payrow-total-${e.id}">${fmt(displayRate + addl)}</td>
             <td>
-              <textarea class="payroll-notes-input${isGregEdit ? ' greg-edit-input' : ''}" onchange="handlePayrollNotes(${e.id}, this)">${e.notes||''}</textarea>
-              ${gregBadge}
+              <textarea class="payroll-notes-input${notesTouched ? ' greg-edit-input' : ''}" onchange="handlePayrollNotes(${e.id}, this)">${e.notes||''}</textarea>
             </td>
             <td class="no-print">${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deletePayrollEntry(${e.id})" title="Delete row">✕</button>` : ''}</td>
           </tr>`;
         } else {
-          const rowClasses = [isManual ? 'manual-row' : '', isGregEdit ? 'greg-edit' : ''].filter(Boolean).join(' ');
-          return `<tr${rowClasses ? ` class="${rowClasses}"` : ''}>
+          return `<tr${isManual ? ' class="manual-row"' : ''}>
             <td>${fmtDate(e.date)}${isManual ? '<br><span style="color:var(--accent);font-size:10px;">+ manual</span>' : ''}</td>
             <td>${e.property||'—'}</td>
             <td>${isManual ? '<span class="badge badge-misc">Manual</span>' : typeBadge(e.type)}</td>
-            <td class="green">${fmt(displayRate)}</td>
-            <td class="mono" style="color:var(--accent2)">${addl !== 0 ? fmt(addl) : '—'}</td>
-            <td class="green">${fmt(displayRate + addl)}</td>
-            <td class="muted">${e.notes||''}${gregBadge}</td>
+            <td class="green${rateTouched ? ' greg-edit-number' : ''}">${fmt(displayRate)}</td>
+            <td class="mono${addlTouched ? ' greg-edit-number' : ''}" style="${addlTouched ? '' : 'color:var(--accent2)'}">${addl !== 0 ? fmt(addl) : '—'}</td>
+            <td class="green${totalTouched ? ' greg-edit-number' : ''}">${fmt(displayRate + addl)}</td>
+            <td class="muted${notesTouched ? ' greg-edit-number' : ''}">${e.notes||''}</td>
             <td></td>
           </tr>`;
         }
@@ -2405,7 +2404,7 @@ function addManualPayRow(forName) {
   };
   db.entries.push(entry);
   sbSaveEntry(entry); // async, fire and forget for responsiveness
-  logActivity(`added a manual pay row for ${name}`, null, id);
+  logActivity(`added a manual pay row for ${name}`, null, id, 'new');
 
   // Append the new row to the correct cleaner's table without full re-render
   const tbody = document.getElementById('payroll-tbody-' + name.replace(/[^a-zA-Z0-9]/g,'_'));
@@ -2472,7 +2471,7 @@ function handlePayrollRateOverride(id, input, isManual) {
   }
   entry.rateOverride = newVal;
   sbSaveEntry(entry);
-  logActivity(`changed the rate for ${entry.cleaner} — ${entry.property} to ${fmt(newVal)}`, null, id);
+  logActivity(`changed the rate for ${entry.cleaner} — ${entry.property} to ${fmt(newVal)}`, null, id, 'rate');
   refreshPayrollRowTotal(id);
 }
 
@@ -2481,7 +2480,7 @@ function handlePayrollAdditionalRate(id, input) {
   if (!entry) return;
   entry.additionalRate = parseFloat(input.value) || 0;
   sbSaveEntry(entry);
-  logActivity(`set an additional rate of ${fmt(entry.additionalRate)} for ${entry.cleaner} — ${entry.property}`, null, id);
+  logActivity(`set an additional rate of ${fmt(entry.additionalRate)} for ${entry.cleaner} — ${entry.property}`, null, id, 'additionalRate');
   refreshPayrollRowTotal(id);
 }
 
@@ -2490,7 +2489,7 @@ function handlePayrollNotes(id, textarea) {
   if (!entry) return;
   entry.notes = textarea.value;
   sbSaveEntry(entry);
-  logActivity(`edited the notes for ${entry.cleaner} — ${entry.property}`, null, id);
+  logActivity(`edited the notes for ${entry.cleaner} — ${entry.property}`, null, id, 'notes');
 }
 
 function refreshPayrollRowTotal(id) {
@@ -4222,7 +4221,7 @@ function getActivityLog() {
   return (db.billingMisc && db.billingMisc[ACTIVITY_LOG_KEY]) || [];
 }
 
-async function logActivity(action, details, entryId) {
+async function logActivity(action, details, entryId, field) {
   // Only log changes made by Greg (the non-admin user) — Jeinna's own edits aren't tracked
   if (currentUser !== 'Greg') return;
   if (!db.billingMisc) db.billingMisc = {};
@@ -4233,6 +4232,7 @@ async function logActivity(action, details, entryId) {
     action,
     details,
     entryId: entryId ?? null,
+    field: field ?? null,
     ts: new Date().toISOString()
   };
   db.billingMisc[ACTIVITY_LOG_KEY].unshift(entry);
@@ -4251,6 +4251,24 @@ function getGregTouchedEntryIds() {
   const ids = new Set();
   log.forEach(a => { if (a.entryId !== null && a.entryId !== undefined) ids.add(String(a.entryId)); });
   return ids;
+}
+// Returns a Map of entryId -> Set of field names Greg has touched on that entry
+// (e.g. 'rate', 'additionalRate', 'notes', 'new'). Lets the UI highlight only the
+// exact value that changed instead of the whole row.
+function getGregTouchedFields() {
+  const log = getActivityLog();
+  const map = new Map();
+  log.forEach(a => {
+    if (a.entryId === null || a.entryId === undefined) return;
+    const key = String(a.entryId);
+    if (!map.has(key)) map.set(key, new Set());
+    if (a.field) map.get(key).add(a.field);
+  });
+  return map;
+}
+function wasFieldTouchedByGreg(touchedFields, entryId, field) {
+  const set = touchedFields.get(String(entryId));
+  return !!(set && set.has(field));
 }
 function wasTouchedByGreg(entryId) {
   return getGregTouchedEntryIds().has(String(entryId));
