@@ -806,6 +806,7 @@ function activateApp(user, role) {
     else if (activePage === 'database') renderDbEmployees();
     else showPage(activePage);
   });
+  startLiveRefresh();
 }
 
 function doLogin() {
@@ -828,6 +829,7 @@ function doLogout(timedOut = false) {
   try { sessionStorage.removeItem(LAST_PAGE_KEY); } catch(e) {}
   stopActivityTracking();
   stopChatPolling();
+  stopLiveRefresh();
   document.getElementById('chat-bubble-btn')?.classList.remove('visible');
   document.getElementById('chat-floating-panel')?.classList.remove('open');
   // Reset ALL tab state — full fresh slate for next login
@@ -1089,6 +1091,38 @@ async function loadFromSupabase() {
     showToast('⚠️ Could not connect to database.', 'error');
   }
   showLoadingOverlay(false);
+}
+
+// Lightweight refresh used by the live-refresh loop: re-pulls the live tables
+// without the loading overlay, status banner churn, or the (relatively expensive)
+// hardcoded seed-data dedup check that full loadFromSupabase() runs on login.
+async function refreshLiveData() {
+  try {
+    const [entries, employees, billingRates, billingMiscRows, messages] = await Promise.all([
+      sbGet('entries', 'order=date.asc'),
+      sbGet('employee_rates', 'order=name.asc'),
+      sbGet('billing_rates', 'order=property.asc'),
+      sbGet('billing_misc'),
+      sbGet('messages', 'order=id.asc')
+    ]);
+    db.entries = entries.map(e => ({
+      id: e.id, date: e.date, cleaner: e.cleaner, property: e.property,
+      type: e.type, rate: e.rate, additionalRate: e.additional_rate || 0,
+      notes: e.notes || '', isManual: e.is_manual || false,
+      addedBy: e.added_by || null, rateOverride: e.rate_override ?? undefined
+    }));
+    if (employees.length > 0) {
+      db.employees = employees.map(e => ({ name: e.name, property: e.property, clean: e.clean, inspect: e.inspect }));
+    }
+    if (billingRates.length > 0) {
+      db.billingRates = billingRates.map(b => ({ property: b.property, rate: b.rate }));
+    }
+    db.billingMisc = {};
+    billingMiscRows.forEach(row => { db.billingMisc[row.key] = row.data || []; });
+    db.messages = messages;
+  } catch(e) {
+    console.error('🔴 Live refresh data pull failed:', e);
+  }
 }
 
 function setDbStatus(msg, type) {
@@ -4405,6 +4439,98 @@ async function clearActivityLog() {
   await sbSaveBillingMisc(ACTIVITY_LOG_KEY, []);
   renderActivityLog();
   updateActivityBadge();
+}
+
+// ==========================================
+// LIVE REFRESH — re-pulls data and re-renders the active tab every 4s,
+// preserving scroll position and pausing automatically while the user is
+// actively typing/editing anything (inputs, selects, textareas, contenteditable).
+// ==========================================
+const LIVE_REFRESH_INTERVAL = 4000;
+let liveRefreshTimer = null;
+let liveRefreshPaused = false;
+let liveRefreshInFlight = false;
+
+function isUserCurrentlyEditing() {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+  if (el.isContentEditable) return true;
+  return false;
+}
+
+function pauseLiveRefresh() { liveRefreshPaused = true; }
+function resumeLiveRefresh() { liveRefreshPaused = false; }
+
+function startLiveRefresh() {
+  stopLiveRefresh();
+  // Pause the instant any field gains focus, resume the instant it's released —
+  // this works for every input/select/textarea across every tab without needing
+  // per-field wiring, since focus/blur bubble through the document.
+  document.addEventListener('focusin', handleLiveRefreshFocusIn);
+  document.addEventListener('focusout', handleLiveRefreshFocusOut);
+  liveRefreshTimer = setInterval(runLiveRefreshTick, LIVE_REFRESH_INTERVAL);
+}
+
+function stopLiveRefresh() {
+  if (liveRefreshTimer) { clearInterval(liveRefreshTimer); liveRefreshTimer = null; }
+  document.removeEventListener('focusin', handleLiveRefreshFocusIn);
+  document.removeEventListener('focusout', handleLiveRefreshFocusOut);
+  liveRefreshPaused = false;
+}
+
+function handleLiveRefreshFocusIn(e) {
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+    pauseLiveRefresh();
+  }
+}
+function handleLiveRefreshFocusOut() {
+  // Small delay so moving focus between two fields (e.g. tabbing) doesn't
+  // briefly resume-then-repause and cause a flicker/refresh mid-edit.
+  setTimeout(() => {
+    if (!isUserCurrentlyEditing()) resumeLiveRefresh();
+  }, 150);
+}
+
+async function runLiveRefreshTick() {
+  if (liveRefreshPaused || isUserCurrentlyEditing() || liveRefreshInFlight) return;
+  if (!currentUser) return; // not logged in
+  liveRefreshInFlight = true;
+  try {
+    // Remember scroll position(s) before re-rendering anything
+    const scrollY = window.scrollY;
+    const chatMessagesEl = document.getElementById('chat-messages');
+    const chatScrollTop = chatMessagesEl ? chatMessagesEl.scrollTop : null;
+    const activityBodyEl = document.getElementById('activity-log-body');
+    const activityScrollTop = activityBodyEl ? activityBodyEl.parentElement.scrollTop : null;
+
+    await refreshLiveData();
+
+    // Re-render whichever tab is actually active right now
+    const activePage = currentPageId;
+    if (activePage === 'dashboard') renderDashboard();
+    else if (activePage === 'summary') renderSummary();
+    else if (activePage === 'payroll') renderPayroll();
+    else if (activePage === 'billing') { if (document.getElementById('billing-report')?.innerHTML.trim()) renderBilling(); }
+    else if (activePage === 'database') renderDbEmployees();
+    else if (activePage === 'activity') renderActivityLog();
+    // 'form' (Log Work) intentionally does not re-render — it's a blank entry form,
+    // re-rendering it would risk clobbering in-progress (but unfocused) selections.
+
+    updateChatBadge();
+    updateActivityBadge();
+
+    // Restore scroll position(s) after the re-render
+    window.scrollTo(0, scrollY);
+    if (chatMessagesEl && chatScrollTop !== null) chatMessagesEl.scrollTop = chatScrollTop;
+    if (activityBodyEl && activityScrollTop !== null) activityBodyEl.parentElement.scrollTop = activityScrollTop;
+  } catch (e) {
+    console.error('🔴 Live refresh failed:', e);
+  } finally {
+    liveRefreshInFlight = false;
+  }
 }
 
 </script>
