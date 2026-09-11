@@ -2126,10 +2126,14 @@ const TAB_STATE_KEY = 'drs_tab_state';
 
 function getDefaultTabState() {
   return {
-    summary:  { from: '', to: '', cleaner: '', property: '' },
-    payroll:  { cleaner: '', from: '', to: '' },
-    billing:  { from: '', to: '', group: '' },
-    database: { subTab: 'db-employees', empFilter: '', propFilter: '', billingFilter: '' },
+    summary:  { from: '', to: '', cleaner: '', property: '', scrollY: 0 },
+    payroll:  { cleaner: '', from: '', to: '', scrollY: 0 },
+    billing:  { from: '', to: '', group: '', scrollY: 0 },
+    database: { subTab: 'db-employees', empFilter: '', propFilter: '', billingFilter: '', scrollY: 0 },
+    dashboard:   { scrollY: 0 },
+    form:        { scrollY: 0 },
+    activity:    { scrollY: 0 },
+    operations:  { scrollY: 0 },
   };
 }
 
@@ -2138,13 +2142,16 @@ function loadTabStateFromStorage() {
     const raw = sessionStorage.getItem(TAB_STATE_KEY);
     if (!raw) return getDefaultTabState();
     const parsed = JSON.parse(raw);
-    // Merge with defaults in case shape changes between versions
     const defaults = getDefaultTabState();
     return {
-      summary:  { ...defaults.summary,  ...(parsed.summary  || {}) },
-      payroll:  { ...defaults.payroll,  ...(parsed.payroll  || {}) },
-      billing:  { ...defaults.billing,  ...(parsed.billing  || {}) },
-      database: { ...defaults.database, ...(parsed.database || {}) },
+      summary:    { ...defaults.summary,    ...(parsed.summary    || {}) },
+      payroll:    { ...defaults.payroll,    ...(parsed.payroll    || {}) },
+      billing:    { ...defaults.billing,    ...(parsed.billing    || {}) },
+      database:   { ...defaults.database,   ...(parsed.database   || {}) },
+      dashboard:  { ...defaults.dashboard,  ...(parsed.dashboard  || {}) },
+      form:       { ...defaults.form,       ...(parsed.form       || {}) },
+      activity:   { ...defaults.activity,   ...(parsed.activity   || {}) },
+      operations: { ...defaults.operations, ...(parsed.operations || {}) },
     };
   } catch(e) { return getDefaultTabState(); }
 }
@@ -2157,6 +2164,10 @@ const tabState = loadTabStateFromStorage();
 const tabVisited = {};  // tracks which tabs have been initialized
 
 function saveTabState(id) {
+  // Always save the current scroll position for this tab
+  if (!tabState[id]) tabState[id] = {};
+  tabState[id].scrollY = window.scrollY;
+
   if (id === 'summary') {
     tabState.summary.from     = document.getElementById('summary-from')?.value || '';
     tabState.summary.to       = document.getElementById('summary-to')?.value || '';
@@ -2203,6 +2214,15 @@ function restoreTabState(id) {
     if (tabState.database.propFilter)    document.getElementById('db-prop-filter').value    = tabState.database.propFilter;
     if (tabState.database.billingFilter) document.getElementById('db-billing-filter').value = tabState.database.billingFilter;
   }
+  // Restore scroll position after the DOM has had two frames to settle from the render
+  const savedY = tabState[id]?.scrollY || 0;
+  if (savedY > 0) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, savedY);
+      });
+    });
+  }
 }
 
 let currentPageId = null;
@@ -2211,7 +2231,7 @@ let currentPageId = null;
 // NAVIGATION
 // ==========================================
 function showPage(id) {
-  // Save state of the page we're leaving
+  // Save state (including scroll position) of the page we're leaving
   if (currentPageId) saveTabState(currentPageId);
 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2221,7 +2241,10 @@ function showPage(id) {
   if (nb) nb.classList.add('active');
   showReadonlyBanner(id);
 
-  // Remember this as the active page so a refresh returns here instead of the dashboard
+  // Scroll to top immediately when switching tabs — the scroll restore in
+  // restoreTabState will override this after the render settles.
+  window.scrollTo(0, 0);
+
   try { sessionStorage.setItem(LAST_PAGE_KEY, id); } catch(e) {}
 
   const firstVisit = !tabVisited[id];
@@ -2230,24 +2253,24 @@ function showPage(id) {
 
   if (id === 'dashboard') {
     renderDashboard();
+    restoreTabState('dashboard');
   }
   if (id === 'form') {
-    // Only reset form on first visit; keep date/cleaner state otherwise
     initForm();
+    restoreTabState('form');
   }
   if (id === 'summary') {
-    initSummaryFilters();          // repopulates cleaner dropdown (preserves value)
-    restoreTabState('summary');    // restore filter values
+    initSummaryFilters();
+    restoreTabState('summary');
     renderSummary();
   }
   if (id === 'payroll') {
-    initPayrollFilters();          // repopulates cleaner dropdown (preserves value)
+    initPayrollFilters();
     restoreTabState('payroll');
-    // Re-render with restored cleaner/dates if we have them
     if (tabState.payroll.cleaner || tabState.payroll.from || tabState.payroll.to) renderPayroll();
   }
   if (id === 'billing') {
-    if (firstVisit) initBillingDates();  // only set default dates on first visit
+    if (firstVisit) initBillingDates();
     restoreTabState('billing');
   }
   if (id === 'database') {
@@ -2255,8 +2278,15 @@ function showPage(id) {
     restoreTabState('database');
     renderDbEmployees();
   }
-  if (id === 'activity') { renderActivityLog(); markActivitySeen(); }
-  if (id === 'operations') { renderOperations(); }
+  if (id === 'activity') {
+    renderActivityLog();
+    markActivitySeen();
+    restoreTabState('activity');
+  }
+  if (id === 'operations') {
+    renderOperations();
+    restoreTabState('operations');
+  }
 }
 
 // ==========================================
