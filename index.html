@@ -619,7 +619,7 @@
     <div class="form-group"><label>Property</label>
       <input type="text" id="summary-property" placeholder="Filter property..." oninput="saveTabState('summary')">
     </div>
-    <button class="btn" onclick="renderSummary()" style="margin-bottom:0">Filter</button>
+    <button class="btn" onclick="summaryPage=0;renderSummary()" style="margin-bottom:0">Filter</button>
     <button class="btn btn-secondary" onclick="clearSummaryFilters()" style="margin-bottom:0">Clear</button>
     <button class="btn btn-green" onclick="exportSummaryCSV()" style="margin-bottom:0;margin-left:auto;">⬇ Export CSV</button>
   </div>
@@ -2470,12 +2470,24 @@ function syncPayrollAndSummary() {
   syncPayrollIfPresent();
 }
 
+const SUMMARY_PAGE_SIZE = 100;
+let summaryPage = 0; // current page index (0-based)
+
 function renderSummary() {
   saveTabState('summary');
-  const entries = getFilteredEntries();
+  const allEntries = getFilteredEntries();
   const canDel = canEdit('summary');
   const editable = isAdmin();
   const touchedFields = isAdmin() ? getGregTouchedFields() : new Map();
+
+  // Clamp page to valid range whenever the entry count changes
+  const totalPages = Math.max(1, Math.ceil(allEntries.length / SUMMARY_PAGE_SIZE));
+  if (summaryPage >= totalPages) summaryPage = totalPages - 1;
+  if (summaryPage < 0) summaryPage = 0;
+
+  const start   = summaryPage * SUMMARY_PAGE_SIZE;
+  const entries = allEntries.slice(start, start + SUMMARY_PAGE_SIZE);
+
   const tbody = document.getElementById('summary-body');
   tbody.innerHTML = entries.length
     ? entries.map(e => {
@@ -2507,7 +2519,7 @@ function renderSummary() {
           <td>${e.cleaner}</td>
           <td>${e.property}</td>
           <td>${typeBadge(e.type)}</td>
-          <td class="green${editable ? '' : ''}">${rateCell}</td>
+          <td class="green">${rateCell}</td>
           <td class="mono" style="${addlTouched ? '' : 'color:var(--accent2)'}">${addlCell}</td>
           <td class="muted">${notesCell}</td>
           ${deleteBtn}
@@ -2515,9 +2527,31 @@ function renderSummary() {
       }).join('')
     : '<tr><td colspan="8" class="empty"><div class="empty-icon">📂</div>No records found.</td></tr>';
 
-  const total = entries.reduce((s,e) => s + (e.rateOverride ?? e.rate) + (e.additionalRate||0), 0);
+  // Total across ALL filtered entries (not just the current page)
+  const total = allEntries.reduce((s,e) => s + (e.rateOverride ?? e.rate) + (e.additionalRate||0), 0);
+
+  // Pagination controls + totals row
+  const showing = allEntries.length === 0 ? 0 : `${start + 1}–${Math.min(start + SUMMARY_PAGE_SIZE, allEntries.length)}`;
   document.getElementById('summary-totals').innerHTML =
-    `<td colspan="4" style="text-align:right;font-weight:700;color:var(--accent)">TOTAL (${entries.length} entries)</td><td colspan="2" style="color:var(--green);font-family:'DM Mono',monospace;font-weight:700">${fmt(total)}</td><td></td><td></td>`;
+    `<td colspan="4" style="text-align:right;font-weight:700;color:var(--accent)">
+       TOTAL (${allEntries.length} entries)
+       ${totalPages > 1 ? `<span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:8px;">showing ${showing}</span>` : ''}
+     </td>
+     <td colspan="2" style="color:var(--green);font-family:'DM Mono',monospace;font-weight:700">${fmt(total)}</td>
+     <td colspan="2" class="no-print">
+       ${totalPages > 1 ? `
+         <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+           <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="summaryChangePage(-1)" ${summaryPage===0?'disabled':''}>‹</button>
+           <span style="font-size:11px;color:var(--text-muted);">${summaryPage+1} / ${totalPages}</span>
+           <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="summaryChangePage(1)" ${summaryPage===totalPages-1?'disabled':''}>›</button>
+         </div>` : ''}
+     </td>`;
+}
+
+function summaryChangePage(dir) {
+  summaryPage += dir;
+  window.scrollTo(0, 0); // scroll to top of table on page change
+  renderSummary();
 }
 
 async function deleteEntry(id) {
@@ -2534,6 +2568,7 @@ function clearSummaryFilters() {
   document.getElementById('summary-to').value = '';
   document.getElementById('summary-cleaner').value = '';
   document.getElementById('summary-property').value = '';
+  summaryPage = 0;
   renderSummary();
 }
 
