@@ -755,12 +755,13 @@ let currentUser = null;
 let currentRole = null;
 
 function isAdmin() { return currentRole === 'admin'; }
-// Greg and Jocy (role 'limited') can edit Payroll and the Database.
-// Summary and Billing editing stay admin-only.
+// Greg and Jocy (role 'limited') can edit Payroll, Billing and the Database.
+// Summary editing stays admin-only.
 function canEditDatabase() { return isAdmin() || currentRole === 'limited'; }
+function canEditBilling()  { return isAdmin() || currentRole === 'limited'; }
 function canEdit(tab) {
   if (isAdmin()) return true;
-  return tab === 'payroll' || tab === 'database';
+  return tab === 'payroll' || tab === 'database' || tab === 'billing';
 }
 
 // ── Session helpers ──
@@ -3008,11 +3009,11 @@ function renderBilling() {
             <div id="misc-rows-${groupKey}">${miscRowsHtml || '<div style="color:var(--text-dim);font-size:12px;padding:4px 0;">No misc items yet — click + Add</div>'}</div>
             <div class="misc-subtotal">
               <span>Misc Subtotal</span>
-              <strong id="misc-sub-${groupKey}">${fmt(groupMiscTotal)}</strong>
+              <strong id="misc-sub-${groupKey}" data-misc-group="${group}">${fmt(groupMiscTotal)}</strong>
             </div>
             <div class="billing-combined-total">
               <span>Billing + Misc</span>
-              <strong id="misc-combined-${groupKey}">${fmt(groupCombined)}</strong>
+              <strong id="misc-combined-${groupKey}" data-bill="${groupBillTotal}">${fmt(groupCombined)}</strong>
             </div>
           </div>
         </div>
@@ -3034,7 +3035,7 @@ function renderBilling() {
         </div>
         <div style="text-align:right;">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;">Combined</div>
-          <div style="font-family:'DM Mono',monospace;font-size:28px;color:var(--green)" id="grand-combined-total">${fmt(grandCombined)}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:28px;color:var(--green)" id="grand-combined-total" data-bill="${grandBillTotal}">${fmt(grandCombined)}</div>
         </div>
       </div>
     </div>
@@ -3045,50 +3046,54 @@ function renderBilling() {
 }
 
 async function addGroupMisc(group) {
+  if (!canEditBilling()) return;
   if (!db.billingMisc) db.billingMisc = {};
   const key = '__group__' + group;
   if (!db.billingMisc[key]) db.billingMisc[key] = [];
   db.billingMisc[key].push({ date: new Date().toISOString().slice(0,10), notes: '', amount: 0 });
   await sbSaveBillingMisc(key, db.billingMisc[key]);
+  logActivity(`added a ${group} miscellaneous item (Billing)`);
   renderBilling();
 }
 
+const MISC_SUM = rows => (rows || []).reduce((s,m) => s + (parseFloat(m.amount)||0), 0);
+
 async function updateGroupMisc(group, idx, field, value) {
+  if (!canEditBilling()) return;
   if (!db.billingMisc) db.billingMisc = {};
   const key = '__group__' + group;
   if (!db.billingMisc[key] || !db.billingMisc[key][idx]) return;
   db.billingMisc[key][idx][field] = field === 'amount' ? (parseFloat(value)||0) : value;
   sbSaveBillingMisc(key, db.billingMisc[key]); // async fire-and-forget
-  // Live-update totals without full re-render
+  const item = db.billingMisc[key][idx];
+  const label = field === 'amount' ? `amount to ${fmt(item.amount)}` : field === 'date' ? `date to ${fmtDate(item.date)}` : `notes to "${item.notes}"`;
+  logActivity(`changed a ${group} miscellaneous item's ${label} (Billing)`);
+  // Live-update totals without a full re-render. The billed amounts come from the
+  // data-bill values renderBilling wrote, so these totals always match a full refresh.
   const groupKey = group.replace(/[^a-zA-Z0-9]/g, '_');
-  const miscRows = db.billingMisc[key];
-  const miscTotal = miscRows.reduce((s,m) => s + (parseFloat(m.amount)||0), 0);
+  const miscTotal = MISC_SUM(db.billingMisc[key]);
   const subEl = document.getElementById('misc-sub-' + groupKey);
   const combEl = document.getElementById('misc-combined-' + groupKey);
   if (subEl) subEl.textContent = fmt(miscTotal);
-  if (combEl) {
-    const from = document.getElementById('billing-from').value;
-    const to   = document.getElementById('billing-to').value;
-    const groupBillTotal = db.entries.filter(e => {
-      if (from && e.date < from) return false;
-      if (to && e.date > to) return false;
-      return getPropertyGroup(e.property) === group;
-    }).reduce((s,e) => s + getBillingRate(e.property), 0);
-    combEl.textContent = fmt(groupBillTotal + miscTotal);
-  }
+  if (combEl) combEl.textContent = fmt((parseFloat(combEl.dataset.bill) || 0) + miscTotal);
+  // Grand totals: only the groups currently shown on the page
   let grandMisc = 0;
-  Object.keys(db.billingMisc).filter(k => k.startsWith('__group__')).forEach(k => {
-    grandMisc += (db.billingMisc[k]||[]).reduce((s,m) => s + (parseFloat(m.amount)||0), 0);
+  document.querySelectorAll('[data-misc-group]').forEach(el => {
+    grandMisc += MISC_SUM(db.billingMisc['__group__' + el.dataset.miscGroup]);
   });
   const gm = document.getElementById('grand-misc-total');
   if (gm) gm.textContent = fmt(grandMisc);
+  const gc = document.getElementById('grand-combined-total');
+  if (gc) gc.textContent = fmt((parseFloat(gc.dataset.bill) || 0) + grandMisc);
 }
 
 async function deleteGroupMisc(group, idx) {
+  if (!canEditBilling()) return;
   const key = '__group__' + group;
   if (!db.billingMisc || !db.billingMisc[key]) return;
-  db.billingMisc[key].splice(idx, 1);
+  const removed = db.billingMisc[key].splice(idx, 1)[0];
   await sbSaveBillingMisc(key, db.billingMisc[key]);
+  logActivity(`deleted a ${group} miscellaneous item${removed ? ` (${fmt(removed.amount)}${removed.notes ? ', "' + removed.notes + '"' : ''})` : ''} (Billing)`);
   renderBilling();
 }
 
