@@ -118,6 +118,7 @@
     width: 100%;
   }
   input:focus, select:focus { border-color: var(--accent); }
+  input[type="search"] { -webkit-appearance: none; appearance: none; }
   select option { background: var(--surface2); }
   .rate-display {
     background: var(--surface2);
@@ -421,7 +422,7 @@
     <div class="login-error" id="login-error"></div>
     <div class="form-group">
       <label>Select User</label>
-      <select id="login-user" onchange="document.getElementById('login-pass').value=''">
+      <select id="login-user" onchange="document.getElementById('login-pass').value='';document.getElementById('login-username').value=this.value">
         <option value="">— Select your name —</option>
         <option value="Greg">Greg</option>
         <option value="Jocy">Jocy</option>
@@ -431,7 +432,9 @@
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="login-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="text" id="login-username" name="username" autocomplete="username" tabindex="-1" aria-hidden="true"
+        style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" readonly>
+      <input type="password" id="login-pass" name="password" autocomplete="current-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="btn" style="width:100%;margin-top:8px;" onclick="doLogin()">Sign In →</button>
   </div>
@@ -522,7 +525,7 @@
         </div>
         <div class="form-group full">
           <label>Notes (Optional)</label>
-          <input type="text" id="entry-notes" placeholder="Any additional notes...">
+          <input type="text" id="entry-notes" name="entry-notes" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Any additional notes...">
         </div>
       </div>
       <div style="display:flex;gap:12px;margin-top:24px;">
@@ -544,7 +547,7 @@
       <select id="summary-cleaner" onchange="saveTabState('summary')"><option value="">All Cleaners</option></select>
     </div>
     <div class="form-group"><label>Property</label>
-      <input type="text" id="summary-property" placeholder="Filter property..." oninput="saveTabState('summary')">
+      <input type="search" id="summary-property" name="summary-property-filter" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Filter property..." oninput="saveTabState('summary')">
     </div>
     <button class="btn" onclick="summaryPage=0;renderSummary()" style="margin-bottom:0">Filter</button>
     <button class="btn btn-secondary" onclick="clearSummaryFilters()" style="margin-bottom:0">Clear</button>
@@ -630,7 +633,7 @@
         <select id="db-emp-filter" onchange="renderDbEmployees()"><option value="">All Employees</option></select>
       </div>
       <div class="form-group"><label>Search Property</label>
-        <input type="text" id="db-prop-filter" placeholder="Type property name..." oninput="renderDbEmployees()">
+        <input type="search" id="db-prop-filter" name="db-prop-filter" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Type property name..." oninput="renderDbEmployees()">
       </div>
     </div>
     <div class="card">
@@ -645,7 +648,7 @@
   <div id="db-billing" class="db-panel" style="display:none;">
     <div class="filter-row">
       <div class="form-group"><label>Search Property</label>
-        <input type="text" id="db-billing-filter" placeholder="Type property name..." oninput="renderDbBilling()">
+        <input type="search" id="db-billing-filter" name="db-billing-filter" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Type property name..." oninput="renderDbBilling()">
       </div>
     </div>
     <div class="card">
@@ -664,7 +667,7 @@
         <div class="form-group" style="margin-bottom:12px;"><label>Employee Name</label>
           <select id="new-emp-name"><option value="">— Select Cleaner —</option></select>
         </div>
-        <div class="form-group" style="margin-bottom:12px;"><label>Property</label><input type="text" id="new-emp-prop" placeholder="Property name"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Property</label><input type="text" id="new-emp-prop" name="new-emp-prop" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Property name"></div>
         <div class="form-grid" style="margin-bottom:12px;">
           <div class="form-group"><label>Clean Rate ($)</label><input type="number" id="new-emp-clean" step="0.01" placeholder="0.00"></div>
           <div class="form-group"><label>Inspect Rate ($)</label><input type="number" id="new-emp-inspect" step="0.01" placeholder="0.00"></div>
@@ -673,11 +676,11 @@
       </div>
       <div class="card">
         <div class="card-title">Add New Employee</div>
-        <div class="form-group" style="margin-bottom:12px;"><label>New Employee Name</label><input type="text" id="new-emp-fullname" placeholder="Full name"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>New Employee Name</label><input type="text" id="new-emp-fullname" name="new-emp-fullname" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Full name"></div>
         <button class="btn" onclick="addNewEmployee()">Add Employee</button>
         <div style="height:32px;"></div>
         <div class="card-title" style="margin-top:4px;">Add Billing Property</div>
-        <div class="form-group" style="margin-bottom:12px;"><label>Property Name</label><input type="text" id="new-billing-prop" placeholder="Property name"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Property Name</label><input type="text" id="new-billing-prop" name="new-billing-prop" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Property name"></div>
         <div class="form-group" style="margin-bottom:12px;"><label>Billing Rate ($)</label><input type="number" id="new-billing-rate" step="0.01" placeholder="0.00"></div>
         <button class="btn" onclick="addBillingProperty()">Add Property</button>
       </div>
@@ -706,6 +709,8 @@
       <button onclick="closeChangePassword()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
     </div>
     <div id="cpw-notice" style="display:none;background:rgba(245,208,51,0.1);border:1px solid rgba(245,208,51,0.35);color:#f5d033;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:14px;">You signed in with the default password. Please choose your own password now so only you can use your account.</div>
+    <input type="text" id="cpw-username" name="username" autocomplete="username" tabindex="-1" aria-hidden="true"
+      style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" readonly>
     <div class="form-group" id="cpw-current-wrap" style="margin-bottom:12px;"><label>Current Password</label><input type="password" id="cpw-current" autocomplete="current-password"></div>
     <div class="form-group" style="margin-bottom:12px;"><label>New Password (min. 8 characters)</label><input type="password" id="cpw-new" autocomplete="new-password"></div>
     <div class="form-group" style="margin-bottom:12px;"><label>Confirm New Password</label><input type="password" id="cpw-confirm" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitChangePassword()"></div>
@@ -949,6 +954,7 @@ function openChangePassword(firstTime = false, knownCurrent = '') {
   if (!USERS[currentUser]?.canChangePassword) return;
   ['cpw-current', 'cpw-new', 'cpw-confirm'].forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('cpw-error').textContent = '';
+  document.getElementById('cpw-username').value = currentUser || '';
   cpwKnownCurrent = firstTime ? knownCurrent : '';
   document.getElementById('cpw-title').textContent = firstTime ? '🔑 Set Your New Password' : '🔑 Change Password';
   document.getElementById('cpw-notice').style.display = firstTime ? '' : 'none';
@@ -2055,7 +2061,7 @@ function saveTabState(id) {
     tabState.summary.from     = document.getElementById('summary-from')?.value || '';
     tabState.summary.to       = document.getElementById('summary-to')?.value || '';
     tabState.summary.cleaner  = document.getElementById('summary-cleaner')?.value || '';
-    tabState.summary.property = document.getElementById('summary-property')?.value || '';
+    tabState.summary.property = notAUserName(document.getElementById('summary-property')?.value || '');
   }
   if (id === 'payroll') {
     tabState.payroll.cleaner = document.getElementById('payroll-cleaner')?.value || '';
@@ -2076,12 +2082,19 @@ function saveTabState(id) {
   persistTabState();
 }
 
+// Browsers sometimes autofill a saved login name into a filter box. A user's name is never a
+// property name, so treat it as empty.
+function notAUserName(v) {
+  return Object.keys(USERS).some(u => u.toLowerCase() === String(v).trim().toLowerCase()) ? '' : v;
+}
+
 function restoreTabState(id) {
   if (id === 'summary') {
     if (tabState.summary.from)     document.getElementById('summary-from').value     = tabState.summary.from;
     if (tabState.summary.to)       document.getElementById('summary-to').value       = tabState.summary.to;
     if (tabState.summary.cleaner)  document.getElementById('summary-cleaner').value  = tabState.summary.cleaner;
-    if (tabState.summary.property) document.getElementById('summary-property').value = tabState.summary.property;
+    tabState.summary.property = notAUserName(tabState.summary.property);
+    document.getElementById('summary-property').value = tabState.summary.property || '';
   }
   if (id === 'payroll') {
     if (tabState.payroll.cleaner) document.getElementById('payroll-cleaner').value = tabState.payroll.cleaner;
@@ -2323,7 +2336,9 @@ function getFilteredEntries() {
   const from = document.getElementById('summary-from').value;
   const to = document.getElementById('summary-to').value;
   const cleaner = document.getElementById('summary-cleaner').value;
-  const prop = document.getElementById('summary-property').value.toLowerCase();
+  const propEl = document.getElementById('summary-property');
+  if (propEl.value && !notAUserName(propEl.value)) propEl.value = '';
+  const prop = propEl.value.toLowerCase();
   return db.entries.filter(e => {
     if (from && e.date < from) return false;
     if (to && e.date > to) return false;
@@ -2451,6 +2466,7 @@ function clearSummaryFilters() {
   document.getElementById('summary-cleaner').value = '';
   document.getElementById('summary-property').value = '';
   summaryPage = 0;
+  saveTabState('summary');
   renderSummary();
 }
 
@@ -2978,7 +2994,7 @@ function renderBilling() {
     const miscRowsHtml = miscRows.map((m,i) => `
       <div class="misc-row">
         <input type="date" value="${m.date||''}" onchange="updateGroupMisc('${group}',${i},'date',this.value)">
-        <input type="text" value="${m.notes||''}" onchange="updateGroupMisc('${group}',${i},'notes',this.value)" placeholder="Notes…">
+        <input type="text" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" value="${m.notes||''}" onchange="updateGroupMisc('${group}',${i},'notes',this.value)" placeholder="Notes…">
         <input type="number" value="${m.amount||''}" step="0.01" onchange="updateGroupMisc('${group}',${i},'amount',this.value)" placeholder="0.00">
         <button class="btn btn-danger btn-sm" onclick="deleteGroupMisc('${group}',${i})" style="padding:5px 8px;font-size:11px;">✕</button>
       </div>`).join('');
