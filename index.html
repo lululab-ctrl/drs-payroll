@@ -427,6 +427,7 @@
         <option value="Greg">Greg</option>
         <option value="Jocy">Jocy</option>
         <option value="Patty">Patty</option>
+        <option value="Josh">Josh</option>
         <option value="Jeinna">Jeinna</option>
       </select>
     </div>
@@ -691,7 +692,7 @@
 <!-- ACTIVITY LOG (admin only, opened via bell icon) -->
 <div id="page-activity" class="page">
   <div class="section-title">🔔 Activity</div>
-  <div class="section-sub">Every change Greg, Jocy or Patty makes — additions, edits, and deletions — appears here.</div>
+  <div class="section-sub">Every change Greg, Jocy, Patty or Josh makes — additions, edits, and deletions — appears here.</div>
   <div class="filter-row">
     <button class="btn btn-secondary" onclick="markActivitySeen();renderActivityLog();" style="margin-bottom:0;">Mark All Read</button>
     <button class="btn btn-danger" onclick="clearActivityLog()" style="margin-bottom:0;">Clear Log</button>
@@ -749,10 +750,11 @@
 const USERS = {
   'Greg':   { password: '!Dream678',    role: 'limited' },
   'Jeinna': { password: '$Jeinna1802$', role: 'admin'   },
-  // Jocy and Patty have the same access as Greg (role 'limited') and may change their own passwords.
+  // Jocy, Patty and Josh have the same access as Greg (role 'limited') and may change their own passwords.
   // On first sign-in with the default password below, they are asked to set their own.
   'Jocy':   { password: '@Dream123',    role: 'limited', canChangePassword: true },
-  'Patty':  { password: '!Dream567',    role: 'limited', canChangePassword: true }
+  'Patty':  { password: '!Dream567',    role: 'limited', canChangePassword: true },
+  'Josh':   { password: '!Dream324',    role: 'limited', canChangePassword: true }
 };
 
 const SESSION_KEY = 'drs_session';
@@ -763,7 +765,7 @@ let currentUser = null;
 let currentRole = null;
 
 function isAdmin() { return currentRole === 'admin'; }
-// Greg, Jocy and Patty (role 'limited') can edit Payroll, Billing and the Database.
+// Greg, Jocy, Patty and Josh (role 'limited') can edit Payroll, Billing and the Database.
 // Summary editing stays admin-only.
 function canEditDatabase() { return isAdmin() || currentRole === 'limited'; }
 function canEditBilling()  { return isAdmin() || currentRole === 'limited'; }
@@ -3174,7 +3176,7 @@ function initDatabase() {
   const empFilter = document.getElementById('db-emp-filter');
   empFilter.innerHTML = '<option value="">All Employees</option>' +
     getUniqueEmployees().map(n => `<option value="${n}">${n}</option>`).join('');
-  // "Add New" tab is available to anyone who can edit the Database (admin, Greg, Jocy, Patty)
+  // "Add New" tab is available to anyone who can edit the Database (admin, Greg, Jocy, Patty, Josh)
   const addTab = document.querySelector('.sub-tab[onclick="showDbTab(\'db-new-entry\')"]');
   if (addTab) addTab.style.display = canEditDatabase() ? '' : 'none';
   renderDbEmployees();
@@ -4612,7 +4614,7 @@ function getActivityLog() {
 }
 
 async function logActivity(action, details, entryId, field) {
-  // Only log changes made by limited users (Greg, Jocy, Patty) — admin edits aren't tracked
+  // Only log changes made by limited users (Greg, Jocy, Patty, Josh) — admin edits aren't tracked
   if (currentRole !== 'limited') return;
   if (!db.billingMisc) db.billingMisc = {};
   if (!db.billingMisc[ACTIVITY_LOG_KEY]) db.billingMisc[ACTIVITY_LOG_KEY] = [];
@@ -4714,7 +4716,7 @@ function renderActivityLog() {
   const lastSeen = parseFloat(localStorage.getItem(ACTIVITY_SEEN_KEY) || '0');
 
   if (log.length === 0) {
-    body.innerHTML = `<div class="empty"><div class="empty-icon">🔔</div>No activity from Greg, Jocy or Patty yet.</div>`;
+    body.innerHTML = `<div class="empty"><div class="empty-icon">🔔</div>No activity from Greg, Jocy, Patty or Josh yet.</div>`;
     return;
   }
 
