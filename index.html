@@ -4341,6 +4341,45 @@ async function seedAllEntries() {
   }
 }
 
+// ==========================================
+// NEW-VERSION NOTICE
+// ==========================================
+// Change BUILD_ID every time a new version is uploaded to GitHub. Open tabs check the live
+// file now and then; when its BUILD_ID differs, they show a "Refresh" notice so nobody keeps
+// working on an old copy of the system.
+const BUILD_ID = '2026-11-26a';
+const VERSION_CHECK_EVERY = 10 * 60 * 1000; // 10 minutes
+
+function showUpdateBanner() {
+  if (document.getElementById('update-banner')) return;
+  const bar = document.createElement('div');
+  bar.id = 'update-banner';
+  bar.setAttribute('role', 'status');
+  bar.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10000;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:12px 16px;box-shadow:0 8px 28px rgba(0,0,0,.45);font-family:"DM Sans",sans-serif;font-size:14px;color:var(--text);';
+  bar.innerHTML = '<span>A new version of the system is available.</span>' +
+    '<button class="btn" style="padding:8px 18px;" onclick="location.reload()">Refresh</button>';
+  document.body.appendChild(bar);
+}
+
+let versionCheckInFlight = false;
+async function checkForNewVersion() {
+  if (!/^https?:$/.test(location.protocol)) return;          // skip when opened as a local file
+  if (versionCheckInFlight || document.getElementById('update-banner')) return;
+  versionCheckInFlight = true;
+  try {
+    const r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) {
+      const m = (await r.text()).match(/const BUILD_ID = '([^']+)'/);
+      if (m && m[1] !== BUILD_ID) showUpdateBanner();
+    }
+  } catch (e) { /* offline or blocked: try again later */ }
+  versionCheckInFlight = false;
+}
+
+setInterval(() => { if (document.visibilityState === 'visible') checkForNewVersion(); }, VERSION_CHECK_EVERY);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForNewVersion(); });
+window.addEventListener('focus', checkForNewVersion);
+
 document.addEventListener('DOMContentLoaded', () => {
   const session = loadSession();
   if (session) {
